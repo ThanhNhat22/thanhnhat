@@ -1,9 +1,14 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
-    <style name="Base.Theme.FindBack" parent="Theme.Material3.DayNight.NoActionBar">
+    <style name="Base.Theme.FindBack" parent="Theme.Material3.Light.NoActionBar">
         <!-- Customize your light theme here. -->
         <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+        <item name="android:windowLightStatusBar">false</item>
     </style>
 
+    <!-- title toolbar-->
+    <style name="titleToolbar">@style/ToolbarTitleStyle</style>
+
     <style name="Theme.FindBack" parent="Base.Theme.FindBack" />
+
 </resources>
