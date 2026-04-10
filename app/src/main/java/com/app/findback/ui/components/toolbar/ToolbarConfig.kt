@@ -1,4 +1,4 @@
-package com.app.findback.ui.toolbar
+package com.app.findback.ui.components.toolbar
 
 data class ToolbarConfig(
     val titleResId: Int,

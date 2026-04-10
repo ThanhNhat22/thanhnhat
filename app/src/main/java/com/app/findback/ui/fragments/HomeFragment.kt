@@ -7,8 +7,8 @@ import android.view.View
 import android.view.ViewGroup
 import com.app.findback.R
 import com.app.findback.databinding.FragmentHomeBinding
-import com.app.findback.ui.toolbar.ToolbarConfig
-import com.app.findback.ui.toolbar.ToolbarConfigProvider
+import com.app.findback.ui.components.toolbar.ToolbarConfig
+import com.app.findback.ui.components.toolbar.ToolbarConfigProvider
 
 class HomeFragment : Fragment(), ToolbarConfigProvider {
     private var _binding: FragmentHomeBinding? = null

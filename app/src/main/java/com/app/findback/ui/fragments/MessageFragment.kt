@@ -6,8 +6,8 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import com.app.findback.R
-import com.app.findback.ui.toolbar.ToolbarConfig
-import com.app.findback.ui.toolbar.ToolbarConfigProvider
+import com.app.findback.ui.components.toolbar.ToolbarConfig
+import com.app.findback.ui.components.toolbar.ToolbarConfigProvider
 
 // TODO: Rename parameter arguments, choose names that match
 // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER

@@ -12,8 +12,8 @@ import com.app.findback.ui.fragments.HomeFragment
 import com.app.findback.ui.fragments.MapFragment
 import com.app.findback.ui.fragments.MessageFragment
 import com.app.findback.ui.fragments.ProfileFragment
-import com.app.findback.ui.toolbar.ToolbarConfig
-import com.app.findback.ui.toolbar.ToolbarConfigProvider
+import com.app.findback.ui.components.toolbar.ToolbarConfig
+import com.app.findback.ui.components.toolbar.ToolbarConfigProvider
 
 class BaseBottomNavActivity : BaseActivity() {
     private lateinit var binding: ActivityBaseBottomNavBinding
@@ -38,6 +38,10 @@ class BaseBottomNavActivity : BaseActivity() {
         setContentView(binding.root)
         setBottomNav()
         setBottomNavInsert()
+//        binding.bottomNav.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ ->
+//            updateFragmentContainerBottomMargin()
+//        }
+//        binding.bottomNav.post { updateFragmentContainerBottomMargin() }
     }
     //get data
     val getToolbar get() = binding.toolbarLayout.toolbar
@@ -127,4 +131,13 @@ class BaseBottomNavActivity : BaseActivity() {
     private fun setBottomNavInsert(){
         setupBottomNavInsertCus(binding.bottomNav)
     }
+
+//    private fun updateFragmentContainerBottomMargin() {
+//        val params = binding.fragmentContainer.layoutParams as ViewGroup.MarginLayoutParams
+//        val bottomNavHeight = binding.bottomNav.height
+//        if (params.bottomMargin != bottomNavHeight) {
+//            params.bottomMargin = bottomNavHeight
+//            binding.fragmentContainer.layoutParams = params
+//        }
+//    }
 }

@@ -7,8 +7,8 @@ import android.view.View
 import android.view.ViewGroup
 import com.app.findback.R
 import com.app.findback.databinding.FragmentMapBinding
-import com.app.findback.ui.toolbar.ToolbarConfig
-import com.app.findback.ui.toolbar.ToolbarConfigProvider
+import com.app.findback.ui.components.toolbar.ToolbarConfig
+import com.app.findback.ui.components.toolbar.ToolbarConfigProvider
 
 class MapFragment : Fragment(), ToolbarConfigProvider {
     private var _binding: FragmentMapBinding? = null

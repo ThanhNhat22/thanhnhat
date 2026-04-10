@@ -5,9 +5,10 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical">
 
-    <androidx.appcompat.widget.Toolbar
+    <com.google.android.material.appbar.MaterialToolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
+        app:layout_scrollFlags="scroll|enterAlways"
         android:layout_height="64dp"
         app:titleTextColor="@color/black"
         android:background="@color/white">
@@ -67,6 +68,6 @@
                 />
         </LinearLayout>
 
-    </androidx.appcompat.widget.Toolbar>
+    </com.google.android.material.appbar.MaterialToolbar>
 
 </LinearLayout>
