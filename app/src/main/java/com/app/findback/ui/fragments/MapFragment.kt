@@ -1,19 +1,42 @@
 package com.app.findback.ui.fragments
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.location.Location
 import android.os.Bundle
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
+import androidx.fragment.app.Fragment
 import com.app.findback.R
 import com.app.findback.databinding.FragmentMapBinding
 import com.app.findback.ui.components.toolbar.ToolbarConfig
 import com.app.findback.ui.components.toolbar.ToolbarConfigProvider
-
+import com.google.android.gms.location.FusedLocationProviderClient
+import org.osmdroid.config.Configuration
+import org.osmdroid.tileprovider.tilesource.TileSourceFactory
+import org.osmdroid.util.GeoPoint
+import org.osmdroid.views.MapView
+import org.osmdroid.views.overlay.Marker
+import com.google.android.gms.location.LocationServices
 class MapFragment : Fragment(), ToolbarConfigProvider {
+
     private var _binding: FragmentMapBinding? = null
     private val binding get() = _binding!!
-
+    private val requestPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+            if (isGranted && hasLocationPermission()) {
+                getCurrentLocation()
+            } else {
+                Toast.makeText(requireContext(), "Vui lòng cấp quyền truy cập vị trí", Toast.LENGTH_SHORT).show()
+            }
+        }
+    private lateinit var map: MapView
+    //lấy vị trí hiện tại
+    private lateinit var fusedLocationClient: FusedLocationProviderClient
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -25,17 +48,114 @@ class MapFragment : Fragment(), ToolbarConfigProvider {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        setControl()
+        setupMap()
+        setPermission()
+    }
+    private fun setControl(){
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity())
+    }
+    //lấy vị trí hiện tại
+    private fun getCurrentLocation() {
+        val hasFine = ContextCompat.checkSelfPermission(
+            requireContext(),
+            Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+        val hasCoarse = ContextCompat.checkSelfPermission(
+            requireContext(),
+            Manifest.permission.ACCESS_COARSE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+        if (!hasFine && !hasCoarse) return
+
+        try {
+            fusedLocationClient.lastLocation
+                .addOnSuccessListener { loc ->
+                    if (loc != null) {
+                        showCurrentLocation(loc)
+                    }
+                }
+        } catch (_: SecurityException) {
+            Toast.makeText(requireContext(), "Không lấy được vị trí", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    //kiểm tra quyền truy cập vị trí
+    private fun hasLocationPermission(): Boolean {
+        val fineGranted = ContextCompat.checkSelfPermission(
+            requireContext(),
+            Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+
+        val coarseGranted = ContextCompat.checkSelfPermission(
+            requireContext(),
+            Manifest.permission.ACCESS_COARSE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+
+        return fineGranted || coarseGranted
+    }
+
+    //show vị trí hiện tại lên map
+    private fun showCurrentLocation(location: Location) {
+        val geoPoint = GeoPoint(location.latitude, location.longitude)
+        // move map tới vị trí
+        map.controller.setCenter(geoPoint)
+        // clear marker cũ để không bị chồng
+        map.overlays.removeAll { it is Marker }
+        // thêm marker
+        val marker = Marker(map)
+        marker.position = geoPoint
+        marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
+        marker.title = "Vị trí của bạn"
+        map.overlays.add(marker)
+        map.invalidate()
+    }
+
+    //set quyền và cấu hình osmdroid
+    private fun setPermission() {
+        if (hasLocationPermission()) {
+            getCurrentLocation()
+        } else {
+            requestPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+        }
+
+        Configuration.getInstance().userAgentValue = requireContext().packageName
+    }
+
+    private fun setupMap() {
+        map = binding.map
+
+        map.setTileSource(TileSourceFactory.MAPNIK)
+        map.setMultiTouchControls(true)
+
+        val controller = map.controller
+        controller.setZoom(15.0)
+
+        // default vị trí HCM
+        val startPoint = GeoPoint(10.762622, 106.660172)
+        controller.setCenter(startPoint)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        binding.map.onResume()
+    }
+
+    override fun onPause() {
+        binding.map.onPause()
+        super.onPause()
     }
 
     override fun onDestroyView() {
-        super.onDestroyView()
+        binding.map.overlays.clear()
         _binding = null
+        super.onDestroyView()
     }
 
     override fun toolbarConfig(): ToolbarConfig {
         return ToolbarConfig(
             titleResId = R.string.nav_map,
-            isBack = false
+            isBack = false,
+            ib1Res = R.drawable.ic_search
         )
     }
 }

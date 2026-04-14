@@ -39,10 +39,6 @@ class BaseBottomNavActivity : BaseActivity() {
         setContentView(binding.root)
         setBottomNav()
         setBottomNavInsert()
-//        binding.bottomNav.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ ->
-//            updateFragmentContainerBottomMargin()
-//        }
-//        binding.bottomNav.post { updateFragmentContainerBottomMargin() }
     }
     //get data
     val getToolbar get() = binding.toolbarLayout.toolbar
