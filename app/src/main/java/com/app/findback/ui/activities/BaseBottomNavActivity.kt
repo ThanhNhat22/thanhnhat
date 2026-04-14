@@ -5,6 +5,7 @@ import android.os.Bundle
 import androidx.activity.enableEdgeToEdge
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import com.google.android.material.appbar.AppBarLayout
 import com.app.findback.BaseActivity
 import com.app.findback.R
 import com.app.findback.databinding.ActivityBaseBottomNavBinding
@@ -73,10 +74,12 @@ class BaseBottomNavActivity : BaseActivity() {
             setBottomNavIcons(item.itemId)
             switchFragment(targetFragment)
             applyToolbarForFragment(targetFragment)
+            updateToolbarScrollBehavior(targetFragment)
             true
         }
 
         applyToolbarForFragment(homeFragment)
+        updateToolbarScrollBehavior(homeFragment)
         binding.bottomNav.selectedItemId = R.id.nav_home
     }
 
@@ -102,6 +105,29 @@ class BaseBottomNavActivity : BaseActivity() {
             ib2 = config.ib2Res
         )
     }
+
+    private fun updateToolbarScrollBehavior(fragment: Fragment) {
+        val toolbarLayoutParams = getToolbar.layoutParams as? AppBarLayout.LayoutParams ?: return
+        val appBarLayout = binding.toolbarLayout.root as? AppBarLayout ?: return
+
+        val isHome = fragment === homeFragment
+        val targetFlags = if (isHome) {
+            AppBarLayout.LayoutParams.SCROLL_FLAG_SCROLL or AppBarLayout.LayoutParams.SCROLL_FLAG_ENTER_ALWAYS
+        } else {
+            0
+        }
+
+        if (toolbarLayoutParams.scrollFlags != targetFlags) {
+            toolbarLayoutParams.scrollFlags = targetFlags
+            getToolbar.layoutParams = toolbarLayoutParams
+        }
+
+        if (!isHome) {
+            // Reset collapsed state when moving away from Home.
+            appBarLayout.setExpanded(true, true)
+        }
+    }
+
     private fun createBottomNavTextColors(): ColorStateList {
         val states = arrayOf(
             intArrayOf(android.R.attr.state_checked),
