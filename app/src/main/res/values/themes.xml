@@ -4,11 +4,13 @@
         <!-- Customize your light theme here. -->
         <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
         <item name="android:windowLightStatusBar">false</item>
+        <!-- Apply app primary button style globally for MaterialButton -->
+        <item name="materialButtonStyle">@style/ButtonPrimaryStyle</item>
     </style>
 
     <!-- title toolbar-->
     <style name="titleToolbar">@style/ToolbarTitleStyle</style>
-
+    <style name="ButtonPrimary" parent="ButtonPrimaryStyle" />
     <style name="Theme.FindBack" parent="Base.Theme.FindBack" />
 
 </resources>

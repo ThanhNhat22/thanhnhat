@@ -1,5 +1,6 @@
 package com.app.findback
 
+import android.graphics.Color
 import android.view.View
 import android.widget.ImageButton
 import androidx.appcompat.app.AppCompatActivity
@@ -22,7 +23,7 @@ open class BaseActivity : AppCompatActivity() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
     }
     //Cấu hình toolbar ko che statusBar
-    public fun setupToolbarCus(toolbar: Toolbar, title: String? = null, isBack: Boolean = false,imageLogo:Int?=null,ib1:Int?=null,ib2:Int?=null, onBack: (() -> Unit)? = null,onIB1: (() -> Unit)? = null,onIB2: (() -> Unit)? = null) {
+    public fun setupToolbarCus(toolbar: Toolbar, title: String? = null, backgroudResId: Int? = null, isBack: Boolean = false,imageLogo:Int?=null,ib1:Int?=null,ib2:Int?=null, onBack: (() -> Unit)? = null,onIB1: (() -> Unit)? = null,onIB2: (() -> Unit)? = null) {
         setSupportActionBar(toolbar)
 
         //set title và back
@@ -37,8 +38,12 @@ open class BaseActivity : AppCompatActivity() {
         val imageButton2 = toolbar.findViewById<ImageButton>(R.id.ib2)
 
 
+
         titleView.text = title.orEmpty()
 
+        //setBackground trong suốt
+        toolbar.setBackgroundColor(backgroudResId ?: Color.WHITE)
+        toolbar.elevation = 0f
 
         //set imagelogo
         if(imageLogo!=null){

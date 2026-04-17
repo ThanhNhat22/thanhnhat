@@ -2,19 +2,24 @@ package com.app.findback.ui.activities
 
 import android.content.res.ColorStateList
 import android.os.Bundle
+import android.util.Log
+import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import com.google.android.material.appbar.AppBarLayout
 import com.app.findback.BaseActivity
 import com.app.findback.R
+import com.app.findback.data.repositories.PostRepositoryImpl
 import com.app.findback.databinding.ActivityBaseBottomNavBinding
+import com.app.findback.domain.repositories.model.Post
 import com.app.findback.ui.fragments.HomeFragment
 import com.app.findback.ui.fragments.MapFragment
 import com.app.findback.ui.fragments.MessageFragment
 import com.app.findback.ui.fragments.ProfileFragment
 import com.app.findback.ui.components.toolbar.ToolbarConfig
 import com.app.findback.ui.components.toolbar.ToolbarConfigProvider
+import com.app.findback.ui.viewmodel.PostViewModel
 
 class BaseBottomNavActivity : BaseActivity() {
     private lateinit var binding: ActivityBaseBottomNavBinding
@@ -31,7 +36,11 @@ class BaseBottomNavActivity : BaseActivity() {
             R.id.nav_profile to profileFragment
         )
     }
-
+    //viewmodel post
+    private lateinit var postViewModel: PostViewModel
+    companion object {
+        lateinit var posts: List<Post>
+    }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -39,12 +48,14 @@ class BaseBottomNavActivity : BaseActivity() {
         setContentView(binding.root)
         setBottomNav()
         setBottomNavInsert()
+        getPosts()
     }
     //get data
     val getToolbar get() = binding.toolbarLayout.toolbar
     //set control
     fun setControl() {
         binding = ActivityBaseBottomNavBinding.inflate(layoutInflater)
+        postViewModel = PostViewModel()
     }
 
     //set bottomnav
@@ -95,6 +106,7 @@ class BaseBottomNavActivity : BaseActivity() {
         setupToolbarCus(
             toolbar = getToolbar,
             title = getString(config.titleResId),
+            backgroudResId = config.backgroudResId,
             isBack = config.isBack,
             imageLogo = config.imageLogoRes,
             ib1 = config.ib1Res,
@@ -153,13 +165,92 @@ class BaseBottomNavActivity : BaseActivity() {
     private fun setBottomNavInsert(){
         setupBottomNavInsertCus(binding.bottomNav)
     }
+    //lấy post
+    private fun getPosts(){
+       postViewModel.getPosts()
+    }
 
-//    private fun updateFragmentContainerBottomMargin() {
-//        val params = binding.fragmentContainer.layoutParams as ViewGroup.MarginLayoutParams
-//        val bottomNavHeight = binding.bottomNav.height
-//        if (params.bottomMargin != bottomNavHeight) {
-//            params.bottomMargin = bottomNavHeight
-//            binding.fragmentContainer.layoutParams = params
-//        }
-//    }
+    //tạo giả data cho posts
+     fun createPostsDemo(){
+        posts().forEach { post ->
+            Log.d("test", "Tạo post ${post.toMap()}")
+            postViewModel.createPost(post) { result ->
+                Log.d("test", "Tạo post ${post.postId} thành công: $result")
+            }
+        }
+     }
+    //danh sách data posts demo
+    fun posts(): List<Post> {
+        return listOf(
+            Post(
+                postId = "1",
+                userId = 101,
+                postType = "lost",
+                title = "Mất ví da màu đen",
+                description = "Mất ví gần công viên, bên trong có CCCD và tiền",
+                itemCategory = "Ví",
+                incidentDatetime = "2026-04-15 18:30",
+                locationText = "Công viên Lê Văn Tám",
+                latitude = 10.7870,
+                longitude = 106.6920,
+                createdAt = System.currentTimeMillis()
+            ),
+
+            Post(
+                postId = "2",
+                userId = 102,
+                postType = "found",
+                title = "Nhặt được điện thoại iPhone",
+                description = "Nhặt được iPhone 13 gần quán cafe",
+                itemCategory = "Điện thoại",
+                incidentDatetime = "2026-04-14 10:00",
+                locationText = "Quận 1, TP.HCM",
+                latitude = 10.7769,
+                longitude = 106.7009,
+                createdAt = System.currentTimeMillis()
+            ),
+
+            Post(
+                postId = "3",
+                userId = 103,
+                postType = "lost",
+                title = "Mất balo laptop",
+                description = "Balo chứa laptop Dell, tài liệu quan trọng",
+                itemCategory = "Balo",
+                incidentDatetime = "2026-04-13 08:00",
+                locationText = "ĐH Bách Khoa",
+                latitude = 10.7735,
+                longitude = 106.6593,
+                createdAt = System.currentTimeMillis()
+            ),
+
+            Post(
+                postId = "4",
+                userId = 104,
+                postType = "found",
+                title = "Nhặt được chìa khóa xe",
+                description = "Chìa khóa xe Honda, có móc khóa Pikachu",
+                itemCategory = "Chìa khóa",
+                incidentDatetime = "2026-04-12 20:00",
+                locationText = "Quận 10",
+                latitude = 10.7700,
+                longitude = 106.6670,
+                createdAt = System.currentTimeMillis()
+            ),
+
+            Post(
+                postId = "5",
+                userId = 105,
+                postType = "lost",
+                title = "Mất tai nghe AirPods",
+                description = "Rơi mất tai nghe ở trung tâm thương mại",
+                itemCategory = "Tai nghe",
+                incidentDatetime = "2026-04-11 15:00",
+                locationText = "Vincom Đồng Khởi",
+                latitude = 10.7798,
+                longitude = 106.6992,
+                createdAt = System.currentTimeMillis()
+            )
+        )
+    }
 }

@@ -26,5 +26,4 @@
         app:labelVisibilityMode="labeled"
         app:itemIconTint="@null"
         android:background="@color/white" />
-
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

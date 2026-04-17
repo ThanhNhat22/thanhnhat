@@ -31,6 +31,6 @@ class MainActivity : BaseActivity() {
     }
     //setToolbar
     private fun setToolbar(){
-        setupToolbarCus(binding.toolbarLayout.toolbar, "Góc tìm đồ", false, R.drawable.logo_tran,R.drawable.ic_notification,R.drawable.ic_search)
+        setupToolbarCus(binding.toolbarLayout.toolbar, "Góc tìm đồ",null, false, R.drawable.logo_tran,R.drawable.ic_notification,R.drawable.ic_search)
     }
 }

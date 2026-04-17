@@ -1,6 +1,7 @@
 package com.app.findback.ui.components.toolbar
 
 data class ToolbarConfig(
+    val backgroudResId: Int? = null,
     val titleResId: Int,
     val isBack: Boolean = false,
     val imageLogoRes: Int? = null,
