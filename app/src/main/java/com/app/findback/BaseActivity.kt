@@ -23,7 +23,7 @@ open class BaseActivity : AppCompatActivity() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
     }
     //Cấu hình toolbar ko che statusBar
-    public fun setupToolbarCus(toolbar: Toolbar, title: String? = null, backgroudResId: Int? = null, isBack: Boolean = false,imageLogo:Int?=null,ib1:Int?=null,ib2:Int?=null, onBack: (() -> Unit)? = null,onIB1: (() -> Unit)? = null,onIB2: (() -> Unit)? = null) {
+    public fun setupToolbarCus(toolbar: Toolbar, title: String? = null, isShowSearch: Boolean=false, backgroudResId: Int? = null, isBack: Boolean = false, imageLogo:Int?=null, ib1:Int?=null, ib2:Int?=null, onBack: (() -> Unit)? = null, onIB1: (() -> Unit)? = null, onIB2: (() -> Unit)? = null) {
         setSupportActionBar(toolbar)
 
         //set title và back
@@ -32,11 +32,21 @@ open class BaseActivity : AppCompatActivity() {
             setDisplayHomeAsUpEnabled(isBack)
         }
 
+
         val logoView = toolbar.findViewById<ImageView>(R.id.ivToolbarLogo)
         val titleView = toolbar.findViewById<TextView>(R.id.tvToolbarTitle)
         val imageButton1 = toolbar.findViewById<ImageButton>(R.id.ib1)
         val imageButton2 = toolbar.findViewById<ImageButton>(R.id.ib2)
+        val layoutSearch = toolbar.findViewById<View>(R.id.layoutSearch)
 
+
+        if (isShowSearch){
+            titleView.visibility = View.GONE
+            layoutSearch.visibility = View.VISIBLE
+        } else {
+            titleView.visibility = View.VISIBLE
+            layoutSearch.visibility = View.GONE
+        }
 
 
         titleView.text = title.orEmpty()
@@ -44,6 +54,7 @@ open class BaseActivity : AppCompatActivity() {
         //setBackground trong suốt
         toolbar.setBackgroundColor(backgroudResId ?: Color.WHITE)
         toolbar.elevation = 0f
+
 
         //set imagelogo
         if(imageLogo!=null){
@@ -73,6 +84,15 @@ open class BaseActivity : AppCompatActivity() {
         toolbar.setNavigationOnClickListener {
             onBackPressedDispatcher.onBackPressed()
         }
+        //ib 1
+        imageButton1.setOnClickListener {
+            onIB1?.invoke()
+        }
+        //ib 2
+        imageButton2.setOnClickListener {
+            onIB2?.invoke()
+        }
+
 
         // fix status bar
         ViewCompat.setOnApplyWindowInsetsListener(toolbar) { view, insets ->

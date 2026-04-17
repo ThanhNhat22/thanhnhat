@@ -3,6 +3,7 @@ package com.app.findback.ui.activities
 import android.content.res.ColorStateList
 import android.os.Bundle
 import android.util.Log
+import android.widget.EditText
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.core.content.ContextCompat
@@ -23,6 +24,7 @@ import com.app.findback.ui.viewmodel.PostViewModel
 
 class BaseBottomNavActivity : BaseActivity() {
     private lateinit var binding: ActivityBaseBottomNavBinding
+    val _binding get() = binding
     private val homeFragment = HomeFragment()
     private val mapFragment = MapFragment()
     private val messageFragment = MessageFragment()
@@ -106,13 +108,22 @@ class BaseBottomNavActivity : BaseActivity() {
         setupToolbarCus(
             toolbar = getToolbar,
             title = getString(config.titleResId),
+            isShowSearch = config.isShowSearch,
             backgroudResId = config.backgroudResId,
             isBack = config.isBack,
             imageLogo = config.imageLogoRes,
             ib1 = config.ib1Res,
-            ib2 = config.ib2Res
+            ib2 = config.ib2Res,
+            onIB1 = config.onIB1,
+            onIB2 = config.onIB2
         )
     }
+
+    fun refreshToolbarForActiveFragment() {
+        applyToolbarForFragment(activeFragment)
+    }
+
+    fun getToolbarSearchInput(): EditText = binding.toolbarLayout.etSearch
 
     private fun updateToolbarScrollBehavior(fragment: Fragment) {
         val toolbarLayoutParams = getToolbar.layoutParams as? AppBarLayout.LayoutParams ?: return

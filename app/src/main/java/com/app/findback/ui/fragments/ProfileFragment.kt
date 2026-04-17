@@ -63,7 +63,8 @@ class ProfileFragment : Fragment(), ToolbarConfigProvider {
     override fun toolbarConfig(): ToolbarConfig {
         return ToolbarConfig(
             titleResId = R.string.nav_profile,
-            isBack = false
+            isBack = false,
+            isShowSearch = false
         )
     }
 }

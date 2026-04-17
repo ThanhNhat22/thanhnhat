@@ -63,7 +63,8 @@ class MessageFragment : Fragment(), ToolbarConfigProvider {
     override fun toolbarConfig(): ToolbarConfig {
         return ToolbarConfig(
             titleResId = R.string.nav_message,
-            isBack = false
+            isBack = false,
+            isShowSearch = false
         )
     }
 }

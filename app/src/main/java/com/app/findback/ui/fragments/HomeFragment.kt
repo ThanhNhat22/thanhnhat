@@ -36,6 +36,7 @@ class HomeFragment : Fragment(), ToolbarConfigProvider {
         return ToolbarConfig(
             titleResId = R.string.app_name,
             isBack = false,
+            isShowSearch = false,
             imageLogoRes = R.drawable.logo_tran,
             ib1Res = R.drawable.ic_notification,
             ib2Res = R.drawable.ic_search
