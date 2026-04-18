@@ -1,12 +1,16 @@
 package com.app.findback.ui.activities
 
+import android.annotation.SuppressLint
 import android.content.res.ColorStateList
 import android.os.Bundle
 import android.util.Log
+import android.view.MotionEvent
+import android.view.ViewConfiguration
 import android.widget.EditText
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.core.content.ContextCompat
+import androidx.core.view.ViewCompat
 import androidx.fragment.app.Fragment
 import com.google.android.material.appbar.AppBarLayout
 import com.app.findback.BaseActivity
@@ -23,10 +27,11 @@ import com.app.findback.ui.components.toolbar.ToolbarConfig
 import com.app.findback.ui.components.toolbar.ToolbarConfigProvider
 import com.app.findback.ui.viewmodel.CircleZoneViewModel
 import com.app.findback.ui.viewmodel.PostViewModel
+import kotlin.math.abs
+import kotlin.text.toInt
 
 class BaseBottomNavActivity : BaseActivity() {
     private lateinit var binding: ActivityBaseBottomNavBinding
-    val _binding get() = binding
     private val homeFragment = HomeFragment()
     private val mapFragment = MapFragment()
     private val messageFragment = MessageFragment()
@@ -48,6 +53,7 @@ class BaseBottomNavActivity : BaseActivity() {
         enableEdgeToEdge()
         setControl()
         setContentView(binding.root)
+        setupDraggableAiChat()
         setBottomNav()
         setBottomNavInsert()
         getPosts()
@@ -264,5 +270,76 @@ class BaseBottomNavActivity : BaseActivity() {
                 createdAt = System.currentTimeMillis()
             )
         )
+    }
+
+    @SuppressLint("ClickableViewAccessibility")
+    private fun setupDraggableAiChat() {
+        val parentView = binding.main
+        val chatView = binding.floatingChat.chatBoxAi
+        val touchSlop = ViewConfiguration.get(this).scaledTouchSlop
+
+        var downRawX = 0f
+        var downRawY = 0f
+        var dX = 0f
+        var dY = 0f
+        var isDragging = false
+
+        chatView.setOnTouchListener { v, event ->
+            when (event.actionMasked) {
+                MotionEvent.ACTION_DOWN -> {
+                    downRawX = event.rawX
+                    downRawY = event.rawY
+                    dX = v.x - downRawX
+                    dY = v.y - downRawY
+                    isDragging = false
+                    true
+                }
+
+                MotionEvent.ACTION_MOVE -> {
+                    val moveX = event.rawX - downRawX
+                    val moveY = event.rawY - downRawY
+                    if (!isDragging && (abs(moveX) > touchSlop || abs(moveY) > touchSlop)) {
+                        isDragging = true
+                    }
+
+                    if (isDragging) {
+                        val insets = ViewCompat.getRootWindowInsets(parentView)
+                            ?.getInsets(androidx.core.view.WindowInsetsCompat.Type.systemBars())
+
+                        val leftBound = (insets?.left ?: 0).toFloat()
+                        val topBound = (insets?.top ?: 0).toFloat()
+                        val rightBound = (parentView.width - v.width - (insets?.right ?: 0)).toFloat()
+                        val navHeight = binding.bottomNav.height
+                        val gap = (12 * resources.displayMetrics.density).toInt() // 12dp
+                        val bottomBound = (
+                                parentView.height
+                                        - v.height
+                                        - (insets?.bottom ?: 0)
+                                        - navHeight
+                                        - gap
+                                ).toFloat()
+
+                        val targetX = (event.rawX + dX).coerceIn(leftBound, rightBound)
+                        val targetY = (event.rawY + dY).coerceIn(topBound, bottomBound)
+
+                        v.x = targetX
+                        v.y = targetY
+                    }
+                    true
+                }
+
+                MotionEvent.ACTION_UP -> {
+                    if (!isDragging) v.performClick()
+                    true
+                }
+
+                else -> false
+            }
+        }
+
+        chatView.setOnClickListener {
+           val intent = intent.setClass(this, ChatAIActivity::class.java)
+            startActivity(intent)
+        }
     }
 }

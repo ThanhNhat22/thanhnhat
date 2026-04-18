@@ -57,4 +57,17 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.2")
     implementation("org.json:json:20210307")
     implementation("androidx.activity:activity-ktx")
+
+    //config cho AI
+    // Gemini SDK
+    implementation("com.google.ai.client.generativeai:generativeai:0.9.0")
+
+    // Coroutines
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+
+    // Gson (parse JSON)
+    implementation("com.google.code.gson:gson:2.10.1")
+
+    // OkHttp (nếu dùng REST API thay vì SDK)
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
     }

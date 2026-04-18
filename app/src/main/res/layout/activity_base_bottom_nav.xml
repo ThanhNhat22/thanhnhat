@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+
 <androidx.coordinatorlayout.widget.CoordinatorLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -7,11 +8,15 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".ui.activities.BaseBottomNavActivity">
+
     <include
         android:id="@+id/toolbarLayout"
-        layout="@layout/toolbar_cus" />
+        layout="@layout/toolbar_cus"
+        android:visibility="visible"
+        />
 
     <FrameLayout
+        android:visibility="visible"
         android:id="@+id/fragmentContainer"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -25,5 +30,19 @@
         app:menu="@menu/menu_nav"
         app:labelVisibilityMode="labeled"
         app:itemIconTint="@null"
-        android:background="@color/white" />
+        android:background="@color/white"
+        android:visibility="visible"
+        />
+
+    <include
+        android:id="@+id/floatingChat"
+        layout="@layout/layout_floating_ai_chat" />
+    <include
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/layoutChatBoxAi"
+        layout="@layout/layout_chat_ai"
+        android:visibility="gone"
+        />
+
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

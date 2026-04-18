@@ -2,6 +2,7 @@ package com.app.findback
 
 import android.graphics.Color
 import android.view.View
+import android.view.WindowManager
 import android.widget.ImageButton
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
@@ -137,6 +138,11 @@ open class BaseActivity : AppCompatActivity() {
         }
 
         ViewCompat.requestApplyInsets(bottomNav)
+    }
+    fun setKeybroad(){
+        WindowCompat.setDecorFitsSystemWindows(window, true)
+        window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE or
+                WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN)
     }
     //Cấu hình mode light cho toàn app
     fun setMode(){
