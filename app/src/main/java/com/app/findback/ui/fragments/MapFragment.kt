@@ -2,7 +2,6 @@ package com.app.findback.ui.fragments
 
 import android.Manifest
 import android.content.Context
-import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Canvas
@@ -14,9 +13,9 @@ import android.graphics.drawable.BitmapDrawable
 import android.text.Editable
 import android.text.TextWatcher
 import android.location.Location
-import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
@@ -28,13 +27,15 @@ import androidx.lifecycle.ViewModelProvider
 import com.app.findback.R
 import com.app.findback.ui.activities.BaseBottomNavActivity
 import com.app.findback.databinding.FragmentMapBinding
-import com.app.findback.domain.repositories.model.Post
+import com.app.findback.domain.models.CircleZone
+import com.app.findback.domain.models.Post
+import com.app.findback.ui.components.bottom_sheet.CircleBottomSheet
 import com.app.findback.ui.components.bottom_sheet.MapBottomSheet
 import com.app.findback.ui.components.toolbar.ToolbarConfig
 import com.app.findback.ui.components.toolbar.ToolbarConfigProvider
+import com.app.findback.ui.viewmodel.CircleZoneViewModel
 import com.app.findback.ui.viewmodel.PostViewModel
 import com.app.findback.utils.extentions.ConvertTime
-import com.google.android.gms.common.wrappers.Wrappers.packageManager
 import com.google.android.gms.location.FusedLocationProviderClient
 import org.osmdroid.config.Configuration
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
@@ -44,6 +45,12 @@ import org.osmdroid.views.overlay.Marker
 import com.google.android.gms.location.LocationServices
 import org.osmdroid.util.BoundingBox
 import org.osmdroid.views.overlay.Polygon
+import kotlin.collections.removeAll
+import kotlin.text.clear
+import kotlin.text.compareTo
+import kotlin.text.get
+import kotlin.text.set
+import kotlin.text.toInt
 
 class MapFragment : Fragment(), ToolbarConfigProvider {
 
@@ -71,13 +78,23 @@ class MapFragment : Fragment(), ToolbarConfigProvider {
     )
     //viewmodel post (shared với Activity)
     private lateinit var postViewModel: PostViewModel
+    private lateinit var circleZoneViewModel: CircleZoneViewModel
     private var isShowSearch = false
     private var iconIB1 = R.drawable.ic_search
+
     private var allPosts: List<Post> = emptyList()
+    private var allCircleZones: List<CircleZone> = emptyList()
+
     private var currentQuery: String = ""
     private var searchTextWatcher: TextWatcher? = null
     private var totalFound = 0
     private var totalLost = 0
+    private var myLocation = GeoPoint(0.0, 0.0)
+    private var radiusMeters = 0.0
+
+    private val polygonById = mutableMapOf<String, Polygon>()
+    private val zoneById = mutableMapOf<String, CircleZone>()
+    private var activePolygonId: String? = null
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -91,16 +108,54 @@ class MapFragment : Fragment(), ToolbarConfigProvider {
         super.onViewCreated(view, savedInstanceState)
         setControl()
         setupMap()
+        setupPolygonDrag()
+        getCircleZoneByUserId("1234")
         setPermission()
-        showLocationOfPosts()
+        getDataFromViewModel()
         observeSearchLive()
-        postViewModel.getPosts()
         ferform()
+        setEvent()
+        drawCircleZones()
+    }
+    //get cirecle của user
+    private fun getCircleZoneByUserId(userId: String = "1234"){
+        circleZoneViewModel.fetchCircleZonesByUserId(userId)
     }
     private fun setControl(){
         //lay61 vị trí thật của người dùng
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity())
         postViewModel = ViewModelProvider(requireActivity())[PostViewModel::class.java]
+        circleZoneViewModel = ViewModelProvider(requireActivity())[CircleZoneViewModel::class.java]
+    }
+    private fun setEvent(){
+        binding.btnMyCrile.setOnClickListener {
+            Toast.makeText(requireContext(), "Vị trí hiện tại: $myLocation", Toast.LENGTH_SHORT).show()
+            //vẽ vùng tròn
+            radiusMeters = 1000.0
+            circleZoneViewModel.createCircleZone(newCircleZone("1234")) { success ->
+                if (success) {
+                    drawCircleZones()
+                }
+            }
+        }
+    }
+
+    //new circle
+    private fun newCircleZone(userId: String): CircleZone {
+        return CircleZone(
+            userId = userId,
+            name = "Vùng tròn ${System.currentTimeMillis()}",
+            centerLat = myLocation.latitude,
+            centerLon = myLocation.longitude,
+            radius = radiusMeters
+        )
+    }
+
+
+    //cập nhật vùng tròn
+    fun updateCircle(circle: Polygon?) {
+        circle?.points = Polygon.pointsAsCircle(myLocation, radiusMeters)
+        map.invalidate()
     }
     //lọc tìm kiếm theo tên tiêu đề của post và zoom đến đó
     private fun filterPosts(query: String) {
@@ -150,10 +205,14 @@ class MapFragment : Fragment(), ToolbarConfigProvider {
         return post.latitude != 0.0 && post.longitude != 0.0
     }
     //hiện tất cả vị trí post và filter theo tên
-    private fun showLocationOfPosts() {
+    private fun getDataFromViewModel() {
         postViewModel.postsShared.observe(viewLifecycleOwner) { posts ->
             allPosts = posts
             filterPosts(currentQuery)
+        }
+        circleZoneViewModel.circleZones.observe(viewLifecycleOwner) { circleZones ->
+            allCircleZones = circleZones
+            drawCircleZones()
         }
     }
     //hàm lấy vị trí hiện tại
@@ -208,6 +267,7 @@ class MapFragment : Fragment(), ToolbarConfigProvider {
                 .addOnSuccessListener { loc ->
                     if (loc != null) {
                         showCurrentLocation(loc)
+                        myLocation = GeoPoint(loc.latitude, loc.longitude)
                     }
                 }
         } catch (_: SecurityException) {
@@ -246,8 +306,6 @@ class MapFragment : Fragment(), ToolbarConfigProvider {
         marker.icon = ContextCompat.getDrawable(requireContext(), R.drawable.ic_my_location)
         marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_CENTER)
         marker.title = "Vị trí của bạn"
-        //vẽ vùng tròn
-        drawCircle(map, location.latitude, location.longitude, 1000.0)
         currentLocationMarker = marker
         map.overlays.add(marker)
         map.invalidate()
@@ -335,28 +393,128 @@ class MapFragment : Fragment(), ToolbarConfigProvider {
         }
         binding.textTotalFound.text = posts.filter { it.postType == "found" && it.status == "active" }.size.toString()
         binding.textTotalLost.text = posts.filter { it.postType == "lost" && it.status == "active"}.size.toString()
+        binding.textTotalCircle.text = allCircleZones.size.toString()
         map.invalidate()
     }
     //vẽ vùng tròn
-    fun drawCircle(
-        mapView: MapView,
-        lat: Double,
-        lon: Double,
-        radiusMeters: Double
-    ) {
+//    fun drawCircle(
+//        mapView: MapView,
+//        lat: Double,
+//        lon: Double,
+//        radiusMeters: Double
+//    ) {
+//        val center = GeoPoint(lat, lon)
+//
+//        circle = Polygon(mapView)
+//
+//        circle?.points = Polygon.pointsAsCircle(center, radiusMeters)
+//
+//        circle?.fillColor = 0x3300FF00   // xanh trong suốt
+//        circle?.strokeColor = Color.RED
+//        circle?.strokeWidth = 3f
+//        circle?.infoWindow = null
+//        circle?.setOnClickListener { _, _, _ ->
+//            val sheet = CircleBottomSheet()
+//            sheet.show(requireActivity().supportFragmentManager, "CircleSheet")
+//             true
+//        }
+//        mapView.overlays.add(circle)
+//        mapView.invalidate()
+//    }
 
-        val center = GeoPoint(lat, lon)
+    private fun setupPolygonDrag() {
+        map.setOnTouchListener { v, event ->
+            val geo = map.projection.fromPixels(event.x.toInt(), event.y.toInt()) as GeoPoint
 
-        val circle = Polygon(mapView)
+            when (event.actionMasked) {
+                MotionEvent.ACTION_DOWN -> {
+                    activePolygonId = findTouchedPolygonId(geo)
+                    // true nếu bấm trong 1 circle => bắt đầu drag circle đó
+                    activePolygonId != null
 
-        circle.points = Polygon.pointsAsCircle(center, radiusMeters)
 
-        circle.fillColor = 0x3300FF00   // xanh trong suốt
-        circle.strokeColor = Color.RED
-        circle.strokeWidth = 3f
+                }
 
-        mapView.overlays.add(circle)
-        mapView.invalidate()
+                MotionEvent.ACTION_MOVE -> {
+                    val id = activePolygonId ?: return@setOnTouchListener false
+                    movePolygon(id, geo)
+                    true
+                }
+
+                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                    activePolygonId?.let { id ->
+                        persistZoneCenter(id) // optional: update Firebase khi thả tay
+                    }
+                    zoneById[activePolygonId]?.let {
+                        val sheet = CircleBottomSheet(it)
+                        sheet.show(requireActivity().supportFragmentManager, "CircleSheet")
+                    }
+
+                    activePolygonId = null
+                    v.performClick()
+
+                    false
+                }
+                else -> false
+            }
+        }
+    }
+    //tìm circle được bấm
+    private fun findTouchedPolygonId(touch: GeoPoint): String? {
+        return zoneById.entries.firstOrNull { (_, zone) ->
+            val center = GeoPoint(zone.centerLat, zone.centerLon)
+            touch.distanceToAsDouble(center) <= zone.radius
+        }?.key
+    }
+
+    //di chuyển vùng tròn
+    private fun movePolygon(id: String, newCenter: GeoPoint) {
+        val zone = zoneById[id] ?: return
+        val polygon = polygonById[id] ?: return
+
+        val updatedZone = zone.copy(
+            centerLat = newCenter.latitude,
+            centerLon = newCenter.longitude
+        )
+        zoneById[id] = updatedZone
+
+        polygon.points = Polygon.pointsAsCircle(newCenter, updatedZone.radius)
+        map.invalidate()
+    }
+    //cập nhật lên firebase
+    private fun persistZoneCenter(id: String) {
+        val zone = zoneById[id] ?: return
+        circleZoneViewModel.updateCircleZone(
+            circleZone = zone,
+            userId = zone.userId,
+            onSuccess = {
+            }
+        )
+    }
+    //ấy data từ firebase của circle vẽ lên map
+    private fun drawCircleZones() {
+        // remove polygon cũ khỏi map
+        map.overlays.removeAll(polygonById.values.toSet())
+        polygonById.clear()
+        zoneById.clear()
+
+        allCircleZones.forEach { zone ->
+            val center = GeoPoint(zone.centerLat, zone.centerLon)
+            val polygon = Polygon(map).apply {
+                id = zone.id
+                points = Polygon.pointsAsCircle(center, zone.radius)
+                fillColor = 0x3300FF00
+                strokeColor = Color.RED
+                strokeWidth = 3f
+                infoWindow = null
+            }
+
+            polygonById[zone.id] = polygon
+            zoneById[zone.id] = zone
+            map.overlays.add(polygon)
+        }
+
+        map.invalidate()
     }
     //custom marker
     fun createMarkerTextTopIconBottom(
@@ -425,6 +583,7 @@ class MapFragment : Fragment(), ToolbarConfigProvider {
         isShowSearch = false
         binding.map.overlays.clear()
         _binding = null
+        postViewModel.removeListener()
         super.onDestroyView()
     }
 

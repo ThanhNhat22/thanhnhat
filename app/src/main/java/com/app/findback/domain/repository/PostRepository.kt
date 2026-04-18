@@ -1,6 +1,6 @@
-package com.app.findback.domain.repositories
+package com.app.findback.domain.repository
 
-import com.app.findback.domain.repositories.model.Post
+import com.app.findback.domain.models.Post
 
 interface PostRepository {
     fun getPosts(onData: (List<Post>) -> Unit)

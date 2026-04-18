@@ -1,7 +1,7 @@
 package com.app.findback.data.source.remote
 
 import android.util.Log
-import com.app.findback.domain.repositories.model.Post
+import com.app.findback.domain.models.Post
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase

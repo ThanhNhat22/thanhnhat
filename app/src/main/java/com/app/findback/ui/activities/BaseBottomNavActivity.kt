@@ -13,13 +13,15 @@ import com.app.findback.BaseActivity
 import com.app.findback.R
 import com.app.findback.data.repositories.PostRepositoryImpl
 import com.app.findback.databinding.ActivityBaseBottomNavBinding
-import com.app.findback.domain.repositories.model.Post
+import com.app.findback.domain.models.CircleZone
+import com.app.findback.domain.models.Post
 import com.app.findback.ui.fragments.HomeFragment
 import com.app.findback.ui.fragments.MapFragment
 import com.app.findback.ui.fragments.MessageFragment
 import com.app.findback.ui.fragments.ProfileFragment
 import com.app.findback.ui.components.toolbar.ToolbarConfig
 import com.app.findback.ui.components.toolbar.ToolbarConfigProvider
+import com.app.findback.ui.viewmodel.CircleZoneViewModel
 import com.app.findback.ui.viewmodel.PostViewModel
 
 class BaseBottomNavActivity : BaseActivity() {
@@ -40,9 +42,7 @@ class BaseBottomNavActivity : BaseActivity() {
     }
     //viewmodel post
     private lateinit var postViewModel: PostViewModel
-    companion object {
-        lateinit var posts: List<Post>
-    }
+    private lateinit var circleZoneViewModel: CircleZoneViewModel
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -58,6 +58,7 @@ class BaseBottomNavActivity : BaseActivity() {
     fun setControl() {
         binding = ActivityBaseBottomNavBinding.inflate(layoutInflater)
         postViewModel = PostViewModel()
+        circleZoneViewModel = CircleZoneViewModel()
     }
 
     //set bottomnav

@@ -1,4 +1,4 @@
-package com.app.findback.domain.repositories.model
+package com.app.findback.domain.models
 
 data class Post(
 	val postId: String = "",

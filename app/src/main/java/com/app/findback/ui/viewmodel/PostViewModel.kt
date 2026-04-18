@@ -5,13 +5,17 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.app.findback.data.repositories.PostRepositoryImpl
-import com.app.findback.domain.repositories.PostRepository
-import com.app.findback.domain.repositories.model.Post
+import com.app.findback.domain.repository.PostRepository
+import com.app.findback.domain.models.Post
 
 class PostViewModel : ViewModel() {
     private val postRepository: PostRepository = PostRepositoryImpl()
     private val _posts = MutableLiveData<List<Post>>(emptyList())
     val postsShared: LiveData<List<Post>> = _posts
+
+    init {
+        getPosts()
+    }
 
    //get list post
     fun getPosts(){

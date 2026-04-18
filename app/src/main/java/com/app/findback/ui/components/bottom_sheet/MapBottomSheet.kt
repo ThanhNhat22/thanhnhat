@@ -8,7 +8,7 @@ import android.view.View
 import android.view.ViewGroup
 import com.app.findback.R
 import com.app.findback.databinding.LayoutMapBottomSheetBinding
-import com.app.findback.domain.repositories.model.Post
+import com.app.findback.domain.models.Post
 import com.app.findback.utils.extentions.ConvertTime
 
 class MapBottomSheet(private val post: Post) : BaseBottomSheet() {
@@ -69,4 +69,6 @@ class MapBottomSheet(private val post: Post) : BaseBottomSheet() {
          super.onDestroyView()
          _binding = null
      }
+
+
 }

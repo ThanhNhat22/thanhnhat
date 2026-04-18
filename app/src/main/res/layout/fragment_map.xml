@@ -11,16 +11,32 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
-    <ImageButton
-        android:id="@+id/btnMyLocation"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:layout_gravity="end|top"
-        android:layout_margin="12dp"
-        android:background="@drawable/bg_map_circle_button"
-        android:contentDescription="@string/nav_map"
-        android:padding="10dp"
-        android:src="@drawable/ic_my_location" />
+        android:orientation="vertical"
+        >
+        <ImageButton
+            android:id="@+id/btnMyLocation"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_margin="12dp"
+            android:background="@drawable/bg_map_circle_button"
+            android:contentDescription="@string/nav_map"
+            android:padding="10dp"
+            android:src="@drawable/ic_my_location" />
+        <ImageButton
+            android:id="@+id/btnMyCrile"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_marginLeft="12dp"
+            android:background="@drawable/bg_map_circle_button"
+            android:contentDescription="@string/nav_map"
+            android:padding="10dp"
+            android:src="@drawable/ic_circle" />
+    </LinearLayout>
 
    <LinearLayout
        android:layout_width="wrap_content"
@@ -30,7 +46,6 @@
        <LinearLayout
            android:layout_width="wrap_content"
            android:layout_height="32dp"
-           android:layout_marginEnd="8sp"
            android:orientation="horizontal"
            >
            <ImageView
@@ -59,6 +74,26 @@
                android:background="@drawable/ic_location_red"/>
            <TextView
                android:id="@+id/textTotalLost"
+               android:layout_width="wrap_content"
+               android:layout_height="32dp"
+               android:text="12"
+               android:textStyle="bold"
+               android:textSize="12sp"
+               android:gravity="center"/>
+       </LinearLayout>
+       <LinearLayout
+           android:layout_width="wrap_content"
+           android:layout_height="32dp"
+           android:layout_marginStart="4dp"
+           android:orientation="horizontal"
+           >
+           <ImageView
+               android:layout_width="32dp"
+               android:layout_height="32dp"
+               android:gravity="center"
+               android:background="@drawable/ic_circle"/>
+           <TextView
+               android:id="@+id/textTotalCircle"
                android:layout_width="wrap_content"
                android:layout_height="32dp"
                android:text="12"
