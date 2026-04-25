@@ -56,15 +56,15 @@ class MapFragment : Fragment(), ToolbarConfigProvider {
 
     private var _binding: FragmentMapBinding? = null
     private val binding get() = _binding!!
-    private val requestPermissionLauncher =
-        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
-            //xin quyền truy cập vị trí
-            if (isGranted && hasLocationPermission()) {
-//                getCurrentLocation()
-            } else {
-                Toast.makeText(requireContext(), "Vui lòng cấp quyền truy cập vị trí", Toast.LENGTH_SHORT).show()
-            }
-        }
+//    private val requestPermissionLauncher =
+//        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+//            //xin quyền truy cập vị trí
+//            if (isGranted && hasLocationPermission()) {
+////                getCurrentLocation()
+//            } else {
+//                Toast.makeText(requireContext(), "Vui lòng cấp quyền truy cập vị trí", Toast.LENGTH_SHORT).show()
+//            }
+//        }
     private lateinit var map: MapView
     //lấy vị trí hiện tại
     private lateinit var fusedLocationClient: FusedLocationProviderClient
@@ -87,8 +87,6 @@ class MapFragment : Fragment(), ToolbarConfigProvider {
 
     private var currentQuery: String = ""
     private var searchTextWatcher: TextWatcher? = null
-    private var totalFound = 0
-    private var totalLost = 0
     private var myLocation = GeoPoint(0.0, 0.0)
     private var radiusMeters = 0.0
 
@@ -217,7 +215,13 @@ class MapFragment : Fragment(), ToolbarConfigProvider {
     }
     //hàm lấy vị trí hiện tại
     private fun ferform(){
-        binding.btnMyLocation.setOnClickListener { getCurrentLocation() }
+        binding.btnMyLocation.setOnClickListener {
+            if (!hasLocationPermission()) {
+                requestPermissions(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION), 1001)
+                return@setOnClickListener
+            }
+            getCurrentLocation()
+        }
     }
     //set sự kiên bấm nút search
     private fun setEventClickSearch()  {
@@ -319,11 +323,26 @@ class MapFragment : Fragment(), ToolbarConfigProvider {
             getCurrentLocation()
         } else {
             //xin quyền lại
-            requestPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+//            requestPermissions().launch(Manifest.permission.ACCESS_FINE_LOCATION)
+            requestPermissions(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION), 1001)
         }
 
         //cấu hỉnh cho osmdroid
         Configuration.getInstance().userAgentValue = requireContext().packageName
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String?>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == 1001 && permissions.size == grantResults.size){
+            grantResults.forEach { result ->
+                if (result != PackageManager.PERMISSION_GRANTED) return
+            }
+            getCurrentLocation()
+        }
     }
 
     private fun setupMap() {

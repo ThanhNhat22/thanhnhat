@@ -5,14 +5,16 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.app.findback.R
 import com.app.findback.databinding.ItemMessageReceivedBinding
 import com.app.findback.databinding.ItemMessageSentBinding
 import com.app.findback.domain.models.ChatMessage
+import com.app.findback.domain.models.Post
 
 class ChatAiAdapter(
-    private val messages: MutableList<ChatMessage>
+    private val messages: MutableList<ChatMessage>,
+    private val posts: MutableList<Post>
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     companion object {
@@ -25,7 +27,11 @@ class ChatAiAdapter(
         messages.addAll(list)
         notifyDataSetChanged()
     }
-
+    fun submitListPosts(list: List<Post>) {
+        posts.clear()
+        posts.addAll(list)
+        notifyDataSetChanged()
+    }
     override fun getItemViewType(position: Int): Int {
         return if (messages[position].isUser) VIEW_TYPE_USER else VIEW_TYPE_AI
     }
@@ -53,7 +59,7 @@ class ChatAiAdapter(
 
         when (holder) {
             is UserViewHolder -> holder.bind(item)
-            is AiViewHolder -> holder.bind(item)
+            is AiViewHolder -> holder.bind(item,posts)
         }
     }
 
@@ -68,12 +74,28 @@ class ChatAiAdapter(
     }
 
     // AI
-    class AiViewHolder(
-        private val binding: ItemMessageReceivedBinding
-    ) : RecyclerView.ViewHolder(binding.root) {
+    class AiViewHolder(private val binding: ItemMessageReceivedBinding) : RecyclerView.ViewHolder(binding.root) {
+        private val postsAdapter = PostAiAdapter(emptyList())
 
-        fun bind(item: ChatMessage) {
+        init {
+            binding.recyclerViewPosts.layoutManager = LinearLayoutManager(binding.root.context, LinearLayoutManager.VERTICAL, false)
+            binding.recyclerViewPosts.isNestedScrollingEnabled = false
+            binding.recyclerViewPosts.adapter = postsAdapter
+        }
+
+        fun bind(item: ChatMessage, allPosts: List<Post>) {
             binding.textViewMessage.text = item.content
+
+            val matchedPosts = item.postId.mapNotNull { id ->
+                allPosts.find { it.postId == id }
+            }
+
+            if (matchedPosts.isEmpty()) {
+                binding.recyclerViewPosts.visibility = View.GONE
+            } else {
+                binding.recyclerViewPosts.visibility = View.VISIBLE
+                postsAdapter.submitList(matchedPosts)
+            }
         }
     }
 }

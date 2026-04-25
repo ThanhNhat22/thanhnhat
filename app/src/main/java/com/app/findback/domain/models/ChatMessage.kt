@@ -4,7 +4,8 @@ data class ChatMessage(
     val id: String = "",
     val content: String = "",
     val isUser: Boolean = true,
-    val timestamp: Long = System.currentTimeMillis()
+    val timestamp: Long = System.currentTimeMillis(),
+    val postId: List<String> = emptyList()
 ){
     companion object{
         fun fromMap(map: Map<String, Any?>): ChatMessage{
@@ -12,7 +13,8 @@ data class ChatMessage(
                 id = map["id"] as String,
                 content = map["content"] as String,
                 isUser = map["isUser"] as Boolean,
-                timestamp = map["timestamp"] as Long
+                timestamp = map["timestamp"] as Long,
+                postId = map["postId"] as List<String> ?: emptyList()
             )
         }
     }
@@ -21,7 +23,8 @@ data class ChatMessage(
             "id" to id,
             "content" to content,
             "isUser" to isUser,
-            "timestamp" to timestamp
+            "timestamp" to timestamp,
+            "postId" to postId
         )
     }
 }

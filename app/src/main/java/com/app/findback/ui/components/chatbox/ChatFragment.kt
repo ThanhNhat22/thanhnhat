@@ -52,10 +52,11 @@ class ChatFragment : Fragment() {
 
     // khởi tạo recyclerview
     private fun setupRecyclerView() {
-        adapter = ChatAiAdapter(mutableListOf())
+        adapter = ChatAiAdapter(mutableListOf(), mutableListOf())
+
         binding.recyclerViewChat.apply {
             layoutManager = LinearLayoutManager(requireContext()).apply {
-                stackFromEnd = true // ensure list shows newest at bottom
+                stackFromEnd = true
             }
             adapter = this@ChatFragment.adapter
         }
@@ -76,6 +77,7 @@ class ChatFragment : Fragment() {
         }
         postViewModel.postsShared.observe(viewLifecycleOwner) { posts ->
             allPosts = posts
+            adapter.submitListPosts(allPosts)
         }
     }
 

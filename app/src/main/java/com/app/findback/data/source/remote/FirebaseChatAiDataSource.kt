@@ -27,7 +27,8 @@ class FirebaseChatAiDataSource {
             "id" to messageId,
             "content" to message.content,
             "isUser" to message.isUser,
-            "timestamp" to message.timestamp
+            "timestamp" to message.timestamp,
+            "postId" to message.postId
         )
 
         database.child(userId)
@@ -46,12 +47,12 @@ class FirebaseChatAiDataSource {
     ) {
         listener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-                val list = snapshot.children.mapNotNull {
-                    (it.value as? Map<String, Any?>)?.let(ChatMessage::fromMap)
+                val list = snapshot.children.mapNotNull { child ->
+                    val map = child.value as? Map<String, Any?> ?: return@mapNotNull null
+                    ChatMessage.fromMap(map)
                 }.sortedBy { it.timestamp }
                 onChange(list)
             }
-
             override fun onCancelled(p0: DatabaseError) {}
         }
 

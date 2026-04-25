@@ -1,6 +1,8 @@
 package com.app.findback.data.source.gemini
 
+import android.util.Log
 import com.app.findback.data.source.remote.FirebaseChatAiDataSource
+import com.app.findback.domain.models.AiResponse
 import com.app.findback.domain.models.ChatMessage
 import com.app.findback.domain.models.ChatSession
 import com.app.findback.domain.models.Post
@@ -11,7 +13,7 @@ import kotlinx.coroutines.withContext
 
 class GeminiChatService {
     private val firebase = FirebaseChatAiDataSource()
-    private val apiKey = ""
+    private val apiKey = "AIzaSyCmIjgQmR9Bex389XYNTrHl2l3r1MIBmKg"
     private val model = GenerativeModel(
         modelName = "gemini-2.5-flash",
         apiKey = apiKey
@@ -33,7 +35,8 @@ class GeminiChatService {
                     id = time.toString(),
                     content = userMessage,
                     isUser = true,
-                    timestamp = time
+                    timestamp = time,
+                    postId = List(posts.size) { posts[it].postId ?: "" }
                 )
 
                 // lưu Firebase (non-blocking callback)
@@ -45,22 +48,50 @@ class GeminiChatService {
                 // BUILD PROMPT
                 val prompt = buildChatPrompt(session, posts)
 
-                // CALL
-                val aiText: String = try {
+                var (replyText, postIds) = try {
                     val response = model.generateContent(prompt)
-                    response.text ?: "Xin lỗi, tôi chưa hiểu câu hỏi."
+
+                    val raw = response.text ?: ""
+                    Log.d("AI_RAW", raw)
+
+                    val clean = raw
+                        .replace("```json", "")
+                        .replace("```", "")
+                        .trim()
+
+                    val aiResponse = try {
+                        Gson().fromJson(clean, AiResponse::class.java)
+                    } catch (e: Exception) {
+                        Log.e("AI_PARSE", "Parse error", e)
+                        null
+                    }
+
+                    val reply = aiResponse?.reply ?: clean
+                    val ids = aiResponse?.postIds ?: emptyList()
+
+                    Log.d("AI_PARSED", "reply=$reply | ids=$ids")
+
+                    Pair(reply, ids)
+
                 } catch (e: Exception) {
                     e.printStackTrace()
-                    "Xin lỗi, hiện tại không thể kết nối tới dịch vụ AI. Vui lòng thử lại sau. ${e.toString()}"
+                    Pair(
+                        "Xin lỗi, hiện tại không thể kết nối tới dịch vụ AI.",
+                        emptyList()
+                    )
                 }
 
                 // AI MESSAGE
                 val aiTime = System.currentTimeMillis()
+                if (postIds.isEmpty()){
+                    postIds = listOf("-1")
+                }
                 val aiMsg = ChatMessage(
                     id = aiTime.toString(),
-                    content = aiText,
+                    content = replyText,
                     isUser = false,
-                    timestamp = aiTime
+                    timestamp = aiTime,
+                    postId = postIds
                 )
 
                 // lưu Firebase cho AI message (non-blocking)
@@ -90,22 +121,30 @@ class GeminiChatService {
         val postsJson = Gson().toJson(posts)
 
         return """
-        Bạn là AI của app FindBack (tìm đồ thất lạc).
-        
-        DỮ LIỆU các bài đăng : 
-        $postsJson
-        
-        LỊCH SỬ CHAT:
-        $history
-        
-        NHIỆM VỤ:
-        - Trả lời thân thiện bằng tiếng Việt
-        - Gợi ý các bài viết phù hợp nếu có
-        - Nếu không có, vẫn trả lời tự nhiên
-        
-        - nếu user hỏi thấy bài đăng nào đăng sẩn gì so sách với dữ liệu user đưa vào thì trả về id bài đăng đó
-        
-        KHÔNG cần trả JSON nữa, chỉ trả lời như chat bình thường.
-    """.trimIndent()
+Bạn là AI của app FindBack (tìm đồ thất lạc).
+
+DỮ LIỆU các bài đăng:
+$postsJson
+
+LỊCH SỬ CHAT:
+$history
+
+NHIỆM VỤ:
+- Trả lời thân thiện bằng tiếng Việt
+- Tìm các bài đăng phù hợp với yêu cầu người dùng
+
+QUAN TRỌNG:
+LUÔN trả về JSON đúng format sau:
+
+{
+  "reply": "nội dung trả lời cho user",
+  "postIds": ["id1", "id2", "id3"]
+}
+
+QUY TẮC:
+- reply: luôn là câu trả lời tự nhiên
+- postIds: danh sách id bài đăng phù hợp (có thể rỗng [])
+- KHÔNG trả thêm text ngoài JSON
+""".trimIndent()
     }
 }
