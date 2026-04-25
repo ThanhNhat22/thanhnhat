@@ -18,6 +18,7 @@ class CircleZoneViewModel : ViewModel() {
         }, userId)
     }
 
+
     fun createCircleZone(circleZone: CircleZone, onSuccess: (Boolean) -> Unit) {
         circleZoneRepository.createCircleZone(onSuccess, circleZone, circleZone.userId)
     }
@@ -27,8 +28,11 @@ class CircleZoneViewModel : ViewModel() {
     fun deleteCircleZone(circleZone: CircleZone, userId: String, onSuccess: (Boolean) -> Unit) {
         circleZoneRepository.deleteCircleZone(onSuccess, circleZone, userId)
     }
+    fun removeListener() {
+        circleZoneRepository.removeListener(onSuccess = {})
+    }
     override fun onCleared() {
-        circleZoneRepository.removeListener { success -> {} }
+        circleZoneRepository.removeListener(onSuccess = {})
         super.onCleared()
     }
 }

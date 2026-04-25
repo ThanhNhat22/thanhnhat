@@ -14,6 +14,7 @@ import android.text.Editable
 import android.text.TextWatcher
 import android.location.Location
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
@@ -92,6 +93,10 @@ class MapFragment : Fragment(), ToolbarConfigProvider {
 
     private val polygonById = mutableMapOf<String, Polygon>()
     private val zoneById = mutableMapOf<String, CircleZone>()
+
+    //lấy vị trị của khi mở link
+    private var locationOfLink: GeoPoint? = null
+
     private var activePolygonId: String? = null
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -113,7 +118,6 @@ class MapFragment : Fragment(), ToolbarConfigProvider {
         observeSearchLive()
         ferform()
         setEvent()
-        drawCircleZones()
     }
     //get cirecle của user
     private fun getCircleZoneByUserId(userId: String = "1234"){
@@ -135,6 +139,17 @@ class MapFragment : Fragment(), ToolbarConfigProvider {
                     drawCircleZones()
                 }
             }
+        }
+    }
+    //zoom tới tọa độ của bài viết nếu tồn tại
+     fun zoomToPost(lat: Double, lng: Double) {
+        Log.d("MAP_DEBUG", "zoomToPostFromActivity called lat=$lat lng=$lng")
+        val location = Location("").apply {
+            latitude = lat
+            longitude = lng
+        }
+        binding.map.post {
+            showCurrentLocation(location)
         }
     }
 
@@ -298,10 +313,15 @@ class MapFragment : Fragment(), ToolbarConfigProvider {
 
     //show vị trí hiện tại lên map
     private fun showCurrentLocation(location: Location) {
+        Log.d("MAP_DEBUG", "lat=${location.latitude}, lng=${location.longitude}")
+        Log.d("MAP_DEBUG", "map width=${map.width}, height=${map.height}")
         //tao vĩ độ và kinh dộ
         val geoPoint = GeoPoint(location.latitude, location.longitude)
         // move map tới vị trí
-        map.controller.setCenter(geoPoint)
+        map.controller.setZoom(20.0)
+        map.controller.animateTo(geoPoint)
+        // cho zoom vào
+
         // chỉ thay marker vị trí hiện tại, không xóa list marker khác
         currentLocationMarker?.let { map.overlays.remove(it) }
         // thêm marker
@@ -320,7 +340,7 @@ class MapFragment : Fragment(), ToolbarConfigProvider {
         //xin quyền truy cập vị trí
         if (hasLocationPermission()) {
             //lấy vị trí hiện tại
-            getCurrentLocation()
+//            getCurrentLocation()
         } else {
             //xin quyền lại
 //            requestPermissions().launch(Manifest.permission.ACCESS_FINE_LOCATION)
@@ -341,7 +361,7 @@ class MapFragment : Fragment(), ToolbarConfigProvider {
             grantResults.forEach { result ->
                 if (result != PackageManager.PERMISSION_GRANTED) return
             }
-            getCurrentLocation()
+//            getCurrentLocation()
         }
     }
 
@@ -412,7 +432,6 @@ class MapFragment : Fragment(), ToolbarConfigProvider {
         }
         binding.textTotalFound.text = posts.filter { it.postType == "found" && it.status == "active" }.size.toString()
         binding.textTotalLost.text = posts.filter { it.postType == "lost" && it.status == "active"}.size.toString()
-        binding.textTotalCircle.text = allCircleZones.size.toString()
         map.invalidate()
     }
     //vẽ vùng tròn
@@ -532,7 +551,7 @@ class MapFragment : Fragment(), ToolbarConfigProvider {
             zoneById[zone.id] = zone
             map.overlays.add(polygon)
         }
-
+        binding.textTotalCircle.text = allCircleZones.size.toString()
         map.invalidate()
     }
     //custom marker
@@ -603,6 +622,7 @@ class MapFragment : Fragment(), ToolbarConfigProvider {
         binding.map.overlays.clear()
         _binding = null
         postViewModel.removeListener()
+        circleZoneViewModel.removeListener()
         super.onDestroyView()
     }
 

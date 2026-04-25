@@ -5,7 +5,6 @@
     android:orientation="vertical"
     android:padding="16dp"
     android:background="@drawable/bg_bottom_sheet">
-
     <!-- Handle -->
     <View
         android:layout_width="40dp"
@@ -13,7 +12,19 @@
         android:layout_gravity="center"
         android:layout_marginBottom="12dp"
         android:background="@drawable/bg_gradient_radius"/>
-
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="12dp"
+        >
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnShare"
+            style="@style/ButtonPrimaryStyle"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:text="Chia sẻ" />
+    </LinearLayout>
     <!-- Card content -->
     <LinearLayout
         android:layout_width="match_parent"

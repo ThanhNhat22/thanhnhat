@@ -3,6 +3,7 @@ package com.app.findback.ui.components.bottom_sheet
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -33,6 +34,21 @@ class MapBottomSheet(private val post: Post) : BaseBottomSheet() {
     private fun setEvent(){
         binding.btnViewInGoogle.setOnClickListener {
             openGoogleMap(post.latitude, post.longitude)
+        }
+        binding.btnShare.setOnClickListener {
+            val kinhDo = post.longitude
+            val viDo = post.latitude
+
+            Log.d("MapBottomSheet", "Kinh độ: $kinhDo, Vĩ độ: $viDo")
+
+            val link = "https://metalk-a52fb.web.app/map/$kinhDo/$viDo"
+
+            val intent = Intent(Intent.ACTION_SEND).apply {
+                type = "text/plain"
+                putExtra(Intent.EXTRA_TEXT, link)
+            }
+
+            startActivity(Intent.createChooser(intent, "Chia sẻ"))
         }
     }
     //set dữ liệu
