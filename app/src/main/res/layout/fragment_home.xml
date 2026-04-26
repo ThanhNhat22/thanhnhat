@@ -5,6 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fillViewport="true"
+    android:background="@color/white"
     android:overScrollMode="ifContentScrolls"
     tools:context=".ui.fragments.HomeFragment">
 
@@ -12,122 +13,79 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:paddingStart="16dp"
-        android:paddingTop="16dp"
-        android:paddingEnd="16dp"
+        android:paddingTop="2dp"
+        android:background="@color/white"
         android:paddingBottom="24dp">
 
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/hello_blank_fragment"
-            android:textSize="20sp"
-            android:textStyle="bold" />
+      <HorizontalScrollView
+          android:layout_width="match_parent"
+          android:background="@color/white"
+          android:layout_height="wrap_content"
+          android:scrollbars="none"
+          >
+          <com.google.android.material.chip.ChipGroup
+              android:layout_marginStart="12dp"
+              android:layout_marginEnd="12dp"
+              android:id="@+id/cgChip"
+              android:layout_width="match_parent"
+              app:singleSelection="true"
+              android:layout_height="wrap_content">
+              <com.google.android.material.chip.Chip
+                  android:layout_width="wrap_content"
+                  android:layout_height="wrap_content"
+                  android:checkable="true"
+                  app:chipBackgroundColor="@color/chip_bg_selector"
+                  android:textColor="@color/chip_text_selector"
+                  app:checkedIconVisible="true"
+                  app:chipCornerRadius="16dp"
+                  android:text="Tất cả"/>
+              <com.google.android.material.chip.Chip
+                  android:layout_width="wrap_content"
+                  android:layout_height="wrap_content"
+                  android:checkable="true"
+                  app:chipBackgroundColor="@color/chip_bg_selector"
+                  android:textColor="@color/chip_text_selector"
+                  app:checkedIconVisible="true"
+                  app:chipCornerRadius="16dp"
+                  android:text="Thất lạc"/>
+              <com.google.android.material.chip.Chip
+                  android:checkable="true"
+                  android:layout_width="wrap_content"
+                  android:layout_height="wrap_content"
+                  app:chipBackgroundColor="@color/chip_bg_selector"
+                  android:textColor="@color/chip_text_selector"
+                  app:checkedIconVisible="true"
+                  app:chipCornerRadius="16dp"
+                  android:text="Tìm thấy"/>
+              <com.google.android.material.chip.Chip
+                  android:checkable="true"
+                  android:layout_width="wrap_content"
+                  android:layout_height="wrap_content"
+                  app:chipBackgroundColor="@color/chip_bg_selector"
+                  android:textColor="@color/chip_text_selector"
+                  app:checkedIconVisible="true"
+                  app:chipCornerRadius="16dp"
+                  android:text="Gần tôi"/>
+              <com.google.android.material.chip.Chip
+                  android:checkable="true"
+                  android:layout_width="wrap_content"
+                  android:layout_height="wrap_content"
+                  app:chipBackgroundColor="@color/chip_bg_selector"
+                  android:textColor="@color/chip_text_selector"
+                  app:checkedIconVisible="true"
+                  app:chipCornerRadius="16dp"
+                  android:text="Khoảng cách"/>
+          </com.google.android.material.chip.ChipGroup>
 
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="match_parent"
-            android:layout_height="160dp"
-            android:layout_marginTop="16dp"
-            app:cardCornerRadius="20dp"
-            app:cardUseCompatPadding="true">
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:gravity="center"
-                android:text="Khối nội dung 1"
-                android:textSize="18sp" />
-        </com.google.android.material.card.MaterialCardView>
-
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="match_parent"
-            android:layout_height="160dp"
-            android:layout_marginTop="16dp"
-            app:cardCornerRadius="20dp"
-            app:cardUseCompatPadding="true">
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:gravity="center"
-                android:text="Khối nội dung 2"
-                android:textSize="18sp" />
-        </com.google.android.material.card.MaterialCardView>
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="match_parent"
-            android:layout_height="160dp"
-            android:layout_marginTop="16dp"
-            app:cardCornerRadius="20dp"
-            app:cardUseCompatPadding="true">
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:gravity="center"
-                android:text="Khối nội dung 2"
-                android:textSize="18sp" />
-        </com.google.android.material.card.MaterialCardView>
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="match_parent"
-            android:layout_height="160dp"
-            android:layout_marginTop="16dp"
-            app:cardCornerRadius="20dp"
-            app:cardUseCompatPadding="true">
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:gravity="center"
-                android:text="Khối nội dung 2"
-                android:textSize="18sp" />
-        </com.google.android.material.card.MaterialCardView>
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="match_parent"
-            android:layout_height="160dp"
-            android:layout_marginTop="16dp"
-            app:cardCornerRadius="20dp"
-            app:cardUseCompatPadding="true">
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:gravity="center"
-                android:text="Khối nội dung 2"
-                android:textSize="18sp" />
-        </com.google.android.material.card.MaterialCardView>
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="match_parent"
-            android:layout_height="160dp"
-            android:layout_marginTop="16dp"
-            app:cardCornerRadius="20dp"
-            app:cardUseCompatPadding="true">
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:gravity="center"
-                android:text="Khối nội dung 2"
-                android:textSize="18sp" />
-        </com.google.android.material.card.MaterialCardView>
-
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="match_parent"
-            android:layout_height="160dp"
-            android:layout_marginTop="16dp"
-            app:cardCornerRadius="20dp"
-            app:cardUseCompatPadding="true">
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:gravity="center"
-                android:text="Khối nội dung 3"
-                android:textSize="18sp" />
-        </com.google.android.material.card.MaterialCardView>
-
+      </HorizontalScrollView>
+<!--        danh sách posts-->
+       <androidx.recyclerview.widget.RecyclerView
+           android:id="@+id/rvPosts"
+           android:layout_width="match_parent"
+           android:layout_height="wrap_content"/>
         <View
             android:layout_width="match_parent"
-            android:layout_height="32dp" />
+            android:layout_height="100dp" />
 
     </LinearLayout>
 

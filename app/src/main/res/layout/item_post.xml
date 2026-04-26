@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    app:cardCornerRadius="0dp"
+    app:strokeWidth="1dp"
+    app:strokeColor="@color/white"
+    app:cardBackgroundColor="@color/white"
+    >
+
+  <LinearLayout
+      android:layout_width="match_parent"
+      android:orientation="vertical"
+      android:layout_height="wrap_content">
+      <LinearLayout
+          android:layout_width="match_parent"
+          android:layout_height="wrap_content"
+          android:orientation="vertical"
+          android:padding="12dp">
+
+          <!-- Header -->
+          <LinearLayout
+              android:layout_width="match_parent"
+              android:layout_height="wrap_content"
+              android:orientation="horizontal"
+              android:gravity="center_vertical">
+
+              <!-- Avatar -->
+              <androidx.appcompat.widget.AppCompatImageView
+                  android:layout_width="40dp"
+                  android:layout_height="40dp"
+                  android:src="@drawable/logo_tran"
+                  />
+
+              <!-- Name + time -->
+              <LinearLayout
+                  android:layout_width="0dp"
+                  android:layout_height="wrap_content"
+                  android:layout_weight="1"
+                  android:orientation="vertical"
+                  android:layout_marginStart="8dp">
+
+                  <TextView
+                      android:id="@+id/tvName"
+                      android:layout_width="wrap_content"
+                      android:layout_height="wrap_content"
+                      android:text="Thảo Hương"
+                      android:textStyle="bold"
+                      android:textSize="14sp"/>
+
+                  <TextView
+                      android:id="@+id/tvTime"
+                      android:layout_width="wrap_content"
+                      android:layout_height="wrap_content"
+                      android:text="2 giờ trước · Quận 1"
+                      android:textSize="12sp"
+                      android:textColor="#888"/>
+              </LinearLayout>
+
+              <!-- Status -->
+              <TextView
+                  android:id="@+id/tvStatus"
+                  android:layout_width="wrap_content"
+                  android:layout_height="wrap_content"
+                  android:text="Thất lạc"
+                  android:textStyle="bold"
+                  android:textColor="@color/primary_red"
+                  android:padding="6dp"
+                  android:textSize="12sp"/>
+          </LinearLayout>
+
+          <!-- Title -->
+          <TextView
+              android:id="@+id/tvTitle"
+              android:layout_width="match_parent"
+              android:layout_height="wrap_content"
+              android:text="Mất iPhone 15 Pro màu xanh"
+              android:textStyle="bold"
+              android:textSize="16sp"
+              android:layout_marginTop="8dp"/>
+
+          <!-- Description -->
+          <TextView
+              android:id="@+id/tvDescription"
+              android:layout_width="match_parent"
+              android:layout_height="wrap_content"
+              android:text="Mất điện thoại tại cafe The Coffee House..."
+              android:textSize="14sp"
+              android:layout_marginTop="4dp"/>
+
+          <!-- Image -->
+          <com.google.android.material.imageview.ShapeableImageView
+              android:id="@+id/imPostImage"
+              android:layout_width="match_parent"
+              android:layout_height="180dp"
+              android:layout_marginTop="8dp"
+              android:scaleType="center"
+              android:src="@drawable/logo_tran"/>
+
+          <!-- Location + time -->
+          <LinearLayout
+              android:layout_width="match_parent"
+              android:layout_height="wrap_content"
+              android:orientation="horizontal"
+              android:layout_marginTop="8dp">
+
+              <TextView
+                  android:id="@+id/tvLocation"
+                  android:layout_width="wrap_content"
+                  android:layout_height="wrap_content"
+                  android:text="Quận 1, TP.HCM - "
+                  android:textSize="12sp"
+                  android:textColor="#666"/>
+
+              <TextView
+                  android:id="@+id/tvTimePerfrom"
+                  android:layout_width="wrap_content"
+                  android:layout_height="wrap_content"
+                  android:text="14:30 hôm nay"
+                  android:textSize="12sp"
+                  android:textColor="#666"/>
+          </LinearLayout>
+
+          <!-- Divider -->
+          <View
+              android:layout_width="match_parent"
+              android:layout_height="1dp"
+              android:background="#EEE"
+              android:layout_marginVertical="8dp"/>
+
+          <!-- Actions -->
+          <LinearLayout
+              android:layout_width="match_parent"
+              android:layout_height="wrap_content"
+              android:orientation="horizontal"
+              android:weightSum="2">
+              <com.google.android.material.button.MaterialButton
+                  android:id="@+id/btnShare"
+                  android:layout_width="0dp"
+                  android:layout_height="wrap_content"
+                  android:layout_weight="1"
+                  android:text="Chia sẻ"/>
+              <Space
+                  android:layout_width="10dp"
+                  android:layout_height="wrap_content"/>
+
+              <com.google.android.material.button.MaterialButton
+                  android:id="@+id/btnSave"
+                  android:layout_width="0dp"
+                  android:layout_height="wrap_content"
+                  android:layout_weight="1"
+                  style="@style/ButtonPrimaryStyle"
+                  android:text="Lưu"/>
+          </LinearLayout>
+      </LinearLayout>
+      <LinearLayout
+          android:layout_width="match_parent"
+          android:layout_height="2dp"
+          android:background="@color/primary_grey"
+          android:gravity="bottom"
+          />
+  </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>

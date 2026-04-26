@@ -628,7 +628,6 @@ class MapFragment : Fragment(), ToolbarConfigProvider {
 
     override fun toolbarConfig(): ToolbarConfig {
         return ToolbarConfig(
-            backgroudResId = R.color.transparent,
             titleResId = R.string.nav_map,
             isBack = false,
             isShowSearch = isShowSearch,

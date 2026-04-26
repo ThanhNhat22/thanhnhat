@@ -30,7 +30,9 @@ open class BaseActivity : AppCompatActivity() {
         //set title và back
         supportActionBar?.apply {
             setDisplayShowTitleEnabled(false)
-            setDisplayHomeAsUpEnabled(isBack)
+            setDisplayHomeAsUpEnabled(isBack).apply {
+
+            }
         }
 
 
