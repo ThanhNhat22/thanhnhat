@@ -11,6 +11,14 @@ import com.app.findback.utils.extentions.ConvertTime
 
 class HomeAdapter(private val context: Context, private val list: MutableList<Post>) : RecyclerView.Adapter<HomeAdapter.MyViewHolder>() {
 
+    private var onItemClickListener: OnItemClickListener? = null
+    //định nghĩa interface
+    interface OnItemClickListener {
+        fun onItemClick(position: Int)
+    }
+    fun setOnItemClickListener(onItemClickListener: OnItemClickListener) {
+        this.onItemClickListener = onItemClickListener
+    }
     override fun onCreateViewHolder(
         parent: ViewGroup,
         viewType: Int
@@ -27,7 +35,7 @@ class HomeAdapter(private val context: Context, private val list: MutableList<Po
 
         val post = list.get(position)
         holder.binding.tvName.text = "Demo"
-        holder.binding.tvTime.text = ConvertTime.formatTime(post.createdAt.toString())
+        holder.binding.tvTime.text = ConvertTime.formatTime(post.incidentDatetime)
         if (post.postType == "lost") {
             holder.binding.tvStatus.text = "Thất lạc"
             holder.binding.tvStatus.setTextColor(context.resources.getColor(R.color.primary_red))
@@ -55,5 +63,10 @@ class HomeAdapter(private val context: Context, private val list: MutableList<Po
 
     inner class MyViewHolder(val binding: ItemPostBinding) : RecyclerView.ViewHolder(binding.root) {
        var pos:Int = 0
+        init {
+            binding.root.setOnClickListener {
+                onItemClickListener?.onItemClick(pos)
+            }
+        }
     }
 }

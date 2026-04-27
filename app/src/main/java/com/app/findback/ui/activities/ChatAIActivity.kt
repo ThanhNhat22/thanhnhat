@@ -36,9 +36,7 @@ class ChatAIActivity : BaseActivity() {
         setupToolbarCus(
             toolbar = binding.toolbarLayout.toolbar,
             title = getString(R.string.ai_chat),
-            imageLogo = R.drawable.ai,
             isShowSearch = false,
-            backgroudResId = R.color.white,
             isBack = true,
             onBack = {
                 setKeybroad()

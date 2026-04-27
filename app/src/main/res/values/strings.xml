@@ -9,4 +9,9 @@
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="ai_chat">Trò chuyện với AI</string>
     <string name="inputPrompt">Nhập tin nhắn...</string>
+
+    <string name="post_detail_title">Chi tiết bài đăng</string>
+
+    <string name="lost">Thất lạc</string>
+    <string name="found">Tìm thấy</string>
 </resources>

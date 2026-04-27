@@ -46,9 +46,11 @@ open class BaseActivity : AppCompatActivity() {
         if (isShowSearch){
             titleView.visibility = View.GONE
             layoutSearch.visibility = View.VISIBLE
+            logoView.visibility = View.GONE
         } else {
             titleView.visibility = View.VISIBLE
             layoutSearch.visibility = View.GONE
+            logoView.visibility = View.VISIBLE
         }
 
 
