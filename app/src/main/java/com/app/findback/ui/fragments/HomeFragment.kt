@@ -1,6 +1,7 @@
 package com.app.findback.ui.fragments
 
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import androidx.fragment.app.Fragment
@@ -8,6 +9,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
+import android.widget.Toast
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -138,6 +140,22 @@ class HomeFragment : Fragment(), ToolbarConfigProvider {
                 val intent = android.content.Intent(requireContext(), PostDetailActivity::class.java)
                 intent.putExtra("postId", postId)
                 startActivity(intent)
+            }
+
+            override fun onItemClickShare(position: Int) {
+                    val postId = allPost[position].postId
+                    Log.d("BaseBottomNavActivity",postId)
+                    val link = "https://metalk-a52fb.web.app/post/$postId"
+
+                    val intent = Intent(Intent.ACTION_SEND).apply {
+                        type = "text/plain"
+                        putExtra(Intent.EXTRA_TEXT, link)
+                    }
+                    startActivity(Intent.createChooser(intent, "Chia sẻ"))
+            }
+
+            override fun onItemClickSave(position: Int) {
+                Toast.makeText(requireContext(), "CHưa làm gì cả", Toast.LENGTH_SHORT).show()
             }
         })
     }

@@ -56,6 +56,11 @@
                     android:host="metalk-a52fb.web.app"
                     android:pathPrefix="/map"
                     android:scheme="https" />
+                <data
+                    android:host="metalk-a52fb.web.app"
+                    android:pathPrefix="/post"
+                    android:scheme="https" />
+
             </intent-filter>
         </activity>
         <activity

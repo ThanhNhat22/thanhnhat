@@ -16,7 +16,7 @@ data class Post(
 	val status: String = "active",
 	val viewCount: Int = 0,
 	val contactCount: Int = 0,
-	val createdAt: Long = 0L,
+	val createdAt: String = "",
 	val updatedAt: Long = 0L,
 	val expiresAt: Long? = null
 ) {
@@ -64,7 +64,7 @@ data class Post(
 				viewCount = (map["viewCount"] as? Number)?.toInt() ?: 0,
 				contactCount = (map["contactCount"] as? Number)?.toInt() ?: 0,
 
-				createdAt = (map["createdAt"] as? Number)?.toLong() ?: 0L,
+				createdAt = map["createdAt"]as? String ?: "",
 				updatedAt = (map["updatedAt"] as? Number)?.toLong() ?: 0L,
 			)
 		}

@@ -197,7 +197,8 @@
                    android:id="@+id/map"
                    android:backgroundTint="@color/white"
                    android:layout_width="match_parent"
-                   android:layout_height="200dp" />
+                   android:layout_height="200dp"
+                   />
            </com.google.android.material.card.MaterialCardView>
 
         </LinearLayout>
@@ -211,19 +212,12 @@
             android:background="@android:color/white"
             android:layout_marginTop="8dp">
 
-            <Button
-                android:id="@+id/btnContact"
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnChat"
+                style="@style/ButtonPrimaryStyle"
                 android:layout_width="match_parent"
                 android:layout_height="48dp"
-                android:text="Nhắn tin với người đăng"
-                android:textColor="@android:color/white"
-                android:textSize="15sp"
-                android:textStyle="bold"
-                android:background="@drawable/bg_gradient_radius"
-                android:drawableStart="@drawable/ic_message"
-                android:drawablePadding="8dp"
-                android:paddingHorizontal="16dp"
-                android:textAllCaps="false" />
+                android:text="Nhắn tin" />
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -231,33 +225,24 @@
                 android:orientation="horizontal"
                 android:layout_marginTop="12dp">
 
-                <Button
+                <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnShare"
+                    style="@style/ButtonPrimaryStyle"
                     android:layout_width="0dp"
-                    android:layout_height="48dp"
                     android:layout_weight="1"
-                    android:text="Chia sẻ"
-                    android:textColor="#050505"
-                    android:textSize="14sp"
-                    android:background="@drawable/bg_gradient_radius"
-                    android:drawableStart="@drawable/ic_add"
-                    android:drawablePadding="6dp"
-                    android:textAllCaps="false"
-                    android:layout_marginEnd="8dp" />
+                    android:layout_height="48dp"
+                    android:text="Chia sẻ" />
+                <Space
+                    android:layout_width="12dp"
+                    android:layout_height="wrap_content"/>
 
-                <Button
+                <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnSave"
+                    style="@style/ButtonPrimaryStyle"
                     android:layout_width="0dp"
-                    android:layout_height="48dp"
                     android:layout_weight="1"
-                    android:text="Lưu bài"
-                    android:textColor="#050505"
-                    android:textSize="14sp"
-                    android:background="@drawable/bg_gradient_radius"
-                    android:drawableStart="@drawable/ic_map"
-                    android:drawablePadding="6dp"
-                    android:textAllCaps="false"
-                    android:layout_marginStart="8dp" />
+                    android:layout_height="48dp"
+                    android:text="Lưu bài" />
             </LinearLayout>
         </LinearLayout>
 
