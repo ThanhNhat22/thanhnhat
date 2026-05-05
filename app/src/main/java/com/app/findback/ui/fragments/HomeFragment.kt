@@ -128,10 +128,17 @@ class HomeFragment : Fragment(), ToolbarConfigProvider {
     }
     //set recyclerview
     private fun setRecyclerView(){
+        //setup normal posts
         val layoutManager = GridLayoutManager(requireContext(), 1)
         layoutManager.orientation = LinearLayoutManager.VERTICAL
         binding.rvPosts.layoutManager = layoutManager
         binding.rvPosts.adapter = homeAdapter
+
+        //setup vip posts
+        val layoutManagerVip = GridLayoutManager(requireContext(), 1)
+        layoutManagerVip.orientation = LinearLayoutManager.HORIZONTAL
+        binding.rvPostsSuggest.layoutManager = layoutManagerVip
+        binding.rvPostsSuggest.adapter = homeAdapter
 
         homeAdapter.setOnItemClickListener(object : HomeAdapter.OnItemClickListener{
             override fun onItemClick(position: Int) {

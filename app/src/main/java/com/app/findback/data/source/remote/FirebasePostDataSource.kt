@@ -41,7 +41,7 @@ class FirebasePostDataSource {
                 }
                 val activePosts = posts.filter { it.status == "active" }
                 //trả data về
-                onData(activePosts)
+                onData(activePosts.sortedByDescending { it.createdAt })
             }
             override fun onCancelled(error: DatabaseError) {
                 Log.e("FirebasePostDataSource", "Listen posts cancelled: ${error.message}", error.toException())

@@ -49,7 +49,6 @@ class HomeAdapter(private val context: Context, private val list: MutableList<Po
         holder.binding.tvDescription.text = post.description
 
         holder.binding.tvLocation.text = post.locationText
-        holder.binding.tvTimePerfrom.text = ConvertTime.formatTime(post.incidentDatetime)
     }
 
     override fun getItemCount(): Int {
