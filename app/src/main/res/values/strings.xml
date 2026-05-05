@@ -14,4 +14,7 @@
 
     <string name="lost">Thất lạc</string>
     <string name="found">Tìm thấy</string>
+
+
+    <string name="search_post_title">Tìm kiếm bài đăng</string>
 </resources>

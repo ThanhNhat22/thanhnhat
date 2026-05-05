@@ -26,6 +26,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.FindBack">
         <activity
+            android:name=".ui.activities.SearchPostActivity"
+            android:exported="false" />
+        <activity
             android:name=".ui.activities.PostDetailActivity"
             android:exported="false" />
 
@@ -60,7 +63,6 @@
                     android:host="metalk-a52fb.web.app"
                     android:pathPrefix="/post"
                     android:scheme="https" />
-
             </intent-filter>
         </activity>
         <activity

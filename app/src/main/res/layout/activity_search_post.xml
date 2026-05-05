@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:orientation="vertical"
+    android:layout_height="match_parent"
+    tools:context=".ui.activities.SearchPostActivity">
+
+    <include
+        android:id="@+id/toolbarLayout"
+        layout="@layout/toolbar_cus"
+        android:visibility="visible"
+        />
+    <HorizontalScrollView
+        android:layout_width="match_parent"
+        android:background="@color/white"
+        android:layout_height="wrap_content"
+        android:scrollbars="none"
+        >
+        <com.google.android.material.chip.ChipGroup
+            android:layout_marginStart="12dp"
+            android:id="@+id/cgChip"
+            android:layout_width="match_parent"
+            app:singleSelection="true"
+            android:paddingTop="6dp"
+            android:paddingEnd="12dp"
+            android:layout_height="wrap_content"
+            android:visibility="visible"
+            >
+            <com.google.android.material.chip.Chip
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checkable="true"
+                app:chipBackgroundColor="@color/chip_bg_selector"
+                android:textColor="@color/chip_text_selector"
+                app:checkedIconVisible="true"
+                app:chipCornerRadius="16dp"
+                android:text="Bài viết"/>
+            <com.google.android.material.chip.Chip
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checkable="true"
+                app:chipBackgroundColor="@color/chip_bg_selector"
+                android:textColor="@color/chip_text_selector"
+                app:checkedIconVisible="true"
+                app:chipCornerRadius="16dp"
+                android:text="Mọi người"/>
+        </com.google.android.material.chip.ChipGroup>
+
+    </HorizontalScrollView>
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvRecently"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+</LinearLayout>

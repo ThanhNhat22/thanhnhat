@@ -18,6 +18,7 @@ import com.app.findback.databinding.FragmentHomeBinding
 import com.app.findback.domain.models.Post
 import com.app.findback.ui.activities.BaseBottomNavActivity
 import com.app.findback.ui.activities.PostDetailActivity
+import com.app.findback.ui.activities.SearchPostActivity
 import com.app.findback.ui.adapters.HomeAdapter
 import com.app.findback.ui.components.toolbar.ToolbarConfig
 import com.app.findback.ui.components.toolbar.ToolbarConfigProvider
@@ -30,8 +31,6 @@ class HomeFragment : Fragment(), ToolbarConfigProvider {
     private lateinit var homeAdapter: HomeAdapter
     private lateinit var allPost: List<Post>
     private lateinit var postViewModel: PostViewModel
-
-    private var isShowSearch = false
     private var iconIB2 = R.drawable.ic_search
     private var currentQuery: String = ""
     override fun onCreateView(
@@ -70,21 +69,8 @@ class HomeFragment : Fragment(), ToolbarConfigProvider {
     //bắt sự kiện sreach
     private fun setEventClickSearch()
     {
-        isShowSearch = !isShowSearch
-        iconIB2 = if (isShowSearch) R.drawable.ic_close else R.drawable.ic_search
-        (requireActivity() as? BaseBottomNavActivity)?.refreshToolbarForActiveFragment()
-
-        val searchInput = (activity as? BaseBottomNavActivity)?.getToolbarSearchInput() ?: return
-        if (isShowSearch) {
-            searchInput.requestFocus()
-            searchInput.setSelection(searchInput.text?.length ?: 0)
-            showKeyboard(searchInput)
-        } else {
-            searchInput.clearFocus()
-            searchInput.setText("")
-            hideKeyboard(searchInput)
-            currentQuery = ""
-        }
+        val intent = Intent(requireContext(), SearchPostActivity::class.java)
+        startActivity(intent)
     }
     private fun showKeyboard(view: View) {
         view.post {
@@ -170,13 +156,12 @@ class HomeFragment : Fragment(), ToolbarConfigProvider {
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
-        postViewModel.removeListener()
     }
 
     override fun toolbarConfig(): ToolbarConfig {
         return ToolbarConfig(
             titleResId = R.string.app_name,
-            isShowSearch = isShowSearch,
+            isShowSearch = false,
             isBack = false,
             imageLogoRes = R.drawable.logo_tran,
             ib1Res = R.drawable.ic_notification,
