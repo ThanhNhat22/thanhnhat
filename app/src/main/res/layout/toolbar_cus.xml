@@ -9,7 +9,8 @@
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         app:layout_scrollFlags="scroll|enterAlways"
-        android:layout_height="64dp"
+        android:layout_height="48dp"
+        android:minHeight="48dp"
         android:background="@color/white"
         android:elevation="0dp"
         >

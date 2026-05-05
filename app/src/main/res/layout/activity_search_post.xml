@@ -5,6 +5,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:orientation="vertical"
+    android:background="@color/white"
     android:layout_height="match_parent"
     tools:context=".ui.activities.SearchPostActivity">
 
@@ -14,17 +15,18 @@
         android:visibility="visible"
         />
     <HorizontalScrollView
+        android:id="@+id/gChip"
         android:layout_width="match_parent"
         android:background="@color/white"
         android:layout_height="wrap_content"
         android:scrollbars="none"
+        android:visibility="gone"
         >
         <com.google.android.material.chip.ChipGroup
             android:layout_marginStart="12dp"
             android:id="@+id/cgChip"
             android:layout_width="match_parent"
             app:singleSelection="true"
-            android:paddingTop="6dp"
             android:paddingEnd="12dp"
             android:layout_height="wrap_content"
             android:visibility="visible"
@@ -52,6 +54,16 @@
     </HorizontalScrollView>
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvRecently"
+        android:background="@color/white"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvPost"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        />
 </LinearLayout>

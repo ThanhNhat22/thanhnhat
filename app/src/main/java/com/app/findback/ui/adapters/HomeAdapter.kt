@@ -60,6 +60,10 @@ class HomeAdapter(private val context: Context, private val list: MutableList<Po
         list.addAll(newData)
         notifyDataSetChanged()
     }
+    fun clearData() {
+        list.clear()
+        notifyDataSetChanged()
+    }
 
 
     inner class MyViewHolder(val binding: ItemPostBinding) : RecyclerView.ViewHolder(binding.root) {
