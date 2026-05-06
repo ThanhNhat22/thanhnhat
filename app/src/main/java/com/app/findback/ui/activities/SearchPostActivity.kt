@@ -111,8 +111,11 @@ class SearchPostActivity : BaseActivity() {
                       )
                       //lưu vào history
                       searchHistoryViewModel.createSearchHistory(searchHistory,onSuccess = {
-                         Toast.makeText(this@SearchPostActivity, "Lưu vào lịch sử tìm kiếm thành công", Toast.LENGTH_SHORT).show()
                           searchHistoryAdapter.addData(searchHistory)
+
+                          allSearchHistory = allSearchHistory?.toMutableList()?.apply {
+                              add(searchHistory)
+                          }
                       })
                   }
                   val postId = list[position].postId
@@ -142,13 +145,18 @@ class SearchPostActivity : BaseActivity() {
             override fun onItemClick(position: Int) {
                 val searchQuery = allSearchHistory?.get(position)?.content ?: return
                 binding.toolbarLayout.etSearch.setText(searchQuery)
+                binding.toolbarLayout.etSearch.setSelection(searchQuery.length)
             }
 
             override fun onItemClickDelete(position: Int) {
                 val searchHistory = allSearchHistory?.get(position) ?: return
                 searchHistoryViewModel.deleteSearchHistory(searchHistory,onSuccess = {
-                    Toast.makeText(this@SearchPostActivity, "Xóa lịch sử tìm kiếm thành công", Toast.LENGTH_SHORT).show()
                     searchHistoryAdapter.removeData(searchHistory)
+
+
+                    allSearchHistory = allSearchHistory?.toMutableList()?.apply {
+                        removeAt(position)
+                    }
                 })
             }
         })
@@ -180,6 +188,7 @@ class SearchPostActivity : BaseActivity() {
                     binding.gChip.visibility = View.GONE
                     binding.rvPost.visibility = View.GONE
                     binding.rvRecently.visibility = View.VISIBLE
+                    binding.tvNoResult.visibility = View.GONE
                     return
                 }
                 binding.gChip.visibility = View.VISIBLE
@@ -192,6 +201,13 @@ class SearchPostActivity : BaseActivity() {
                 filteredPosts?.let {
                     postAdapter.clearData()
                     postAdapter.addNewData(it)
+
+                    if (it.isEmpty()) {
+                        binding.tvNoResult.visibility = View.VISIBLE
+                    } else {
+                        binding.tvNoResult.visibility = View.GONE
+                    }
+
                     binding.rvPost.visibility = View.VISIBLE
                     setOnClick(it)
                 }
