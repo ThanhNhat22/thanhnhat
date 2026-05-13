@@ -1,64 +1,38 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:paddingEnd="8dp"
-    android:paddingTop="8dp"
     android:orientation="vertical"
-    android:paddingBottom="8dp"
-    android:gravity="start">
+    android:gravity="start"
+    android:paddingHorizontal="12dp"
+    android:paddingVertical="4dp">
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:orientation="horizontal"
-        android:layout_height="match_parent">
-       <LinearLayout
-           android:layout_width="wrap_content"
-           android:layout_height="match_parent">
-           <ImageView
-               android:id="@+id/ivAiChat"
-               android:padding="4dp"
-               android:layout_width="48dp"
-               android:layout_height="48dp"
-               android:scaleType="centerCrop"
-               android:contentDescription="@null"
-               android:src="@drawable/ai" />
-       </LinearLayout>
-       <LinearLayout
-           android:layout_width="wrap_content"
-           android:layout_height="match_parent"
-           android:orientation="vertical"
-           >
-           <com.google.android.material.card.MaterialCardView
-               android:layout_width="wrap_content"
-               android:layout_height="wrap_content"
-               android:layout_marginEnd="64dp"
-               app:cardCornerRadius="16dp"
-               app:cardElevation="2dp"
-               app:cardBackgroundColor="#F0F0F0">
+    <androidx.cardview.widget.CardView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="64dp"
+        app:cardCornerRadius="16dp"
+        app:cardBackgroundColor="#F0F0F0"
+        xmlns:app="http://schemas.android.com/apk/res-auto">
 
-               <TextView
-                   android:id="@+id/textViewMessage"
-                   android:layout_width="wrap_content"
-                   android:layout_height="wrap_content"
-                   android:padding="12dp"
-                   android:text="Tin nhắn từ AI"
-                   android:textColor="@android:color/black"
-                   android:textSize="14sp"/>
+        <TextView
+            android:id="@+id/tvMessage"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="10dp"
+            android:textColor="@color/black"
+            android:textSize="15sp"
+            android:maxWidth="240dp"/>
 
-           </com.google.android.material.card.MaterialCardView>
-           <androidx.recyclerview.widget.RecyclerView
-               android:id="@+id/recyclerViewPosts"
-               android:layout_width="match_parent"
-               android:layout_height="wrap_content"
-               android:paddingTop="8dp"
-               android:clipToPadding="false"
-               android:nestedScrollingEnabled="false"
-               tools:listitem="@layout/item_message_post" />
-       </LinearLayout>
-    </LinearLayout>
+    </androidx.cardview.widget.CardView>
 
+    <TextView
+        android:id="@+id/tvTime"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="10sp"
+        android:textColor="@color/gray"
+        android:layout_marginTop="2dp"/>
 
 </LinearLayout>

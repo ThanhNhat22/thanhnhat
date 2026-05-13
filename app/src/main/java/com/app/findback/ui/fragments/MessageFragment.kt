@@ -1,70 +1,142 @@
 package com.app.findback.ui.fragments
 
+import android.content.Intent
 import android.os.Bundle
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.app.findback.R
+import com.app.findback.data.repositories.MessageRepositoryImpl
+import com.app.findback.data.source.remote.FirebaseMessageDataSource
+import com.app.findback.databinding.FragmentMessageBinding
+import com.app.findback.domain.models.Conversation
+import com.app.findback.ui.activities.ChatActivity
+import com.app.findback.ui.adapters.ConversationAdapter
 import com.app.findback.ui.components.toolbar.ToolbarConfig
 import com.app.findback.ui.components.toolbar.ToolbarConfigProvider
+import com.app.findback.ui.viewmodel.MessageViewModel
+import com.app.findback.ui.viewmodel.MessageViewModelFactory
+import com.app.findback.ui.components.SwipeToDeleteCallback
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.firebase.auth.FirebaseAuth
+import androidx.recyclerview.widget.ItemTouchHelper
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 
-// TODO: Rename parameter arguments, choose names that match
-// the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-private const val ARG_PARAM1 = "param1"
-private const val ARG_PARAM2 = "param2"
-
-/**
- * A simple [Fragment] subclass.
- * Use the [MessageFragment.newInstance] factory method to
- * create an instance of this fragment.
- */
 class MessageFragment : Fragment(), ToolbarConfigProvider {
-    // TODO: Rename and change types of parameters
-    private var param1: String? = null
-    private var param2: String? = null
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        arguments?.let {
-            param1 = it.getString(ARG_PARAM1)
-            param2 = it.getString(ARG_PARAM2)
+    private var _binding: FragmentMessageBinding? = null
+    private val binding get() = _binding!!
+
+    private val currentUserId: String
+        get() = FirebaseAuth.getInstance().currentUser?.uid ?: ""
+
+    private val viewModel: MessageViewModel by viewModels {
+        MessageViewModelFactory(MessageRepositoryImpl(FirebaseMessageDataSource()))
+    }
+
+    private val adapter by lazy {
+        ConversationAdapter { conversation -> openChat(conversation) }
+    }
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+        _binding = FragmentMessageBinding.inflate(inflater, container, false)
+        return binding.root
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        setupRecyclerView()
+        observeConversations()
+        viewModel.loadConversations()
+    }
+
+    private fun setupRecyclerView() {
+        binding.rvConversations.apply {
+            layoutManager = LinearLayoutManager(requireContext())
+            adapter = this@MessageFragment.adapter
+        }
+
+        // Swipe to delete
+        val swipeCallback = SwipeToDeleteCallback(requireContext()) { position ->
+            val conversation = adapter.currentList.getOrNull(position) ?: return@SwipeToDeleteCallback
+            confirmDelete(conversation)
+        }
+        ItemTouchHelper(swipeCallback).attachToRecyclerView(binding.rvConversations)
+    }
+
+    private fun observeConversations() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewModel.conversations.collectLatest { list ->
+                adapter.submitList(list)
+                binding.tvEmpty.visibility = if (list.isEmpty()) View.VISIBLE else View.GONE
+            }
         }
     }
 
-    override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View? {
-        // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_message, container, false)
+    private fun confirmDelete(conversation: Conversation) {
+        val position = adapter.currentList.indexOf(conversation)
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("Xóa cuộc trò chuyện")
+            .setMessage("Bạn có chắc muốn xóa cuộc trò chuyện?")
+            .setPositiveButton("Xóa") { _, _ ->
+                viewModel.deleteConversation(conversation.conversationId)
+            }
+            .setNegativeButton("Hủy") { _, _ ->
+                if (position >= 0) adapter.notifyItemChanged(position)
+            }
+            .setOnCancelListener {
+                // Bam ra ngoai dialog cung snap back
+                if (position >= 0) adapter.notifyItemChanged(position)
+            }
+            .show()
+    }
+
+    // Mo chat tu danh sach conversation
+    private fun openChat(conversation: Conversation) {
+        val otherUserId = if (conversation.user1Id == currentUserId)
+            conversation.user2Id else conversation.user1Id
+        startChatWith(
+            otherUserId = otherUserId,
+            otherUserName = conversation.otherUserName,
+            otherUserAvatar = conversation.otherUserAvatar
+        )
+    }
+
+    override fun toolbarConfig() = ToolbarConfig(
+        titleResId = R.string.title_name,
+        isBack = false,
+        isShowSearch = false
+    )
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 
     companion object {
-        /**
-         * Use this factory method to create a new instance of
-         * this fragment using the provided parameters.
-         *
-         * @param param1 Parameter 1.
-         * @param param2 Parameter 2.
-         * @return A new instance of fragment MessageFragment.
-         */
-        // TODO: Rename and change types and number of parameters
-        @JvmStatic
-        fun newInstance(param1: String, param2: String) =
-            MessageFragment().apply {
-                arguments = Bundle().apply {
-                    putString(ARG_PARAM1, param1)
-                    putString(ARG_PARAM2, param2)
-                }
-            }
+        // Dung startChatWith() extension ben duoi de mo chat tu bat ky Fragment nao
     }
+}
 
-    override fun toolbarConfig(): ToolbarConfig {
-        return ToolbarConfig(
-            titleResId = R.string.nav_message,
-            isBack = false,
-            isShowSearch = false
-        )
+// Extension function - goi nhu the nay o bat ky Fragment nao:
+// requireActivity().startChatWith(post.userId.toString(), post.title)
+fun Fragment.startChatWith(
+    otherUserId: String,
+    otherUserName: String,
+    otherUserAvatar: String = ""
+) {
+    val intent = Intent(requireContext(), ChatActivity::class.java).apply {
+        putExtra(ChatActivity.EXTRA_OTHER_USER_ID, otherUserId)
+        putExtra(ChatActivity.EXTRA_OTHER_USER_NAME, otherUserName)
+        putExtra(ChatActivity.EXTRA_OTHER_USER_AVATAR, otherUserAvatar)
     }
+    startActivity(intent)
 }

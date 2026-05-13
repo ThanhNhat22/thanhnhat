@@ -283,5 +283,6 @@ class BaseBottomNavActivity : BaseActivity() {
            val intent = intent.setClass(this, ChatAIActivity::class.java)
             startActivity(intent)
         }
+
     }
 }

@@ -6,7 +6,18 @@
     <string name="nav_message">Tin nhắn</string>
     <string name="nav_profile">Cá nhân</string>
     <!-- TODO: Remove or change this placeholder text -->
+    <string name="title_name">Tin nhắn</string>
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="ai_chat">Trò chuyện với AI</string>
     <string name="inputPrompt">Nhập tin nhắn...</string>
+    <string name="back">Quay lại</string>
+    <string name="send">Gửi</string>
+    <string name="attach">Đính kèm</string>
+    <string name="send_location">Gửi vị trí</string>
+    <string name="send_post">Gửi bài đăng</string>
+    <string name="location">Vị trí</string>
+    <string name="post">Bài đăng</string>
+    <string name="hint_message">Nhắn tin...</string>
+    <string name="user_avatar">Ảnh đại diện</string>
+    <string name="pick_post">Chọn bài đăng</string>
 </resources>

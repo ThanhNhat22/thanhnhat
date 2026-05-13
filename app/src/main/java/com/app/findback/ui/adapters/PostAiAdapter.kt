@@ -32,7 +32,7 @@ class PostAiAdapter(
     inner class PostViewHolder(private val binding: ItemMessagePostBinding) : RecyclerView.ViewHolder(binding.root) {
         fun bind(post: Post) {
             // Hiển thị title hoặc fallback
-            binding.textViewMessage.text = post.title.ifBlank { post.locationText.ifBlank { post.postId } }
+            //binding.textViewMessage.text = post.title.ifBlank { post.locationText.ifBlank { post.postId } }
             itemView.setOnClickListener {
                 Log.d("PostAiAdapter", "Post clicked: ${post.postId}")
                 onClick?.invoke(post)

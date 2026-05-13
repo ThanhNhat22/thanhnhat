@@ -37,11 +37,16 @@
              <action android:name="android.provider.Telephony.SMS_RECEIVED"/>
             </intent-filter>
         </receiver>
-
+        <activity android:name=".ui.activities.TestChatActivity"
+            android:exported="true"/>
         <activity
             android:name=".ui.activities.ChatAIActivity"
             android:exported="false"
             android:windowSoftInputMode="adjustResize|stateHidden" />
+        <activity
+            android:name=".ui.activities.ChatActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize|stateHidden"/>
         <activity
             android:name=".ui.activities.BaseBottomNavActivity"
             android:exported="true">

@@ -69,7 +69,7 @@ class ChatAiAdapter(
     ) : RecyclerView.ViewHolder(binding.root) {
 
         fun bind(item: ChatMessage) {
-            binding.textViewMessage.text = item.content
+            binding.tvMessage.text = item.content
         }
     }
 
@@ -77,25 +77,21 @@ class ChatAiAdapter(
     class AiViewHolder(private val binding: ItemMessageReceivedBinding) : RecyclerView.ViewHolder(binding.root) {
         private val postsAdapter = PostAiAdapter(emptyList())
 
-        init {
-            binding.recyclerViewPosts.layoutManager = LinearLayoutManager(binding.root.context, LinearLayoutManager.VERTICAL, false)
-            binding.recyclerViewPosts.isNestedScrollingEnabled = false
-            binding.recyclerViewPosts.adapter = postsAdapter
-        }
+
 
         fun bind(item: ChatMessage, allPosts: List<Post>) {
-            binding.textViewMessage.text = item.content
+            binding.tvMessage.text = item.content
 
             val matchedPosts = item.postId.mapNotNull { id ->
                 allPosts.find { it.postId == id }
             }
 
-            if (matchedPosts.isEmpty()) {
+           /* if (matchedPosts.isEmpty()) {
                 binding.recyclerViewPosts.visibility = View.GONE
             } else {
                 binding.recyclerViewPosts.visibility = View.VISIBLE
                 postsAdapter.submitList(matchedPosts)
-            }
+            }*/
         }
     }
 }

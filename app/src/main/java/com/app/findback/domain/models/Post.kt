@@ -13,6 +13,7 @@ data class Post(
 	val locationText: String = "",
 	val latitude: Double = 0.0,
 	val longitude: Double = 0.0,
+	val imageUrl: String = "",          // <-- thêm field này
 	val status: String = "active",
 	val viewCount: Int = 0,
 	val contactCount: Int = 0,
@@ -20,7 +21,6 @@ data class Post(
 	val updatedAt: Long = 0L,
 	val expiresAt: Long? = null
 ) {
-	// convert object → Firebase
 	fun toMap(): Map<String, Any?> {
 		return mapOf(
 			"postId" to postId,
@@ -29,10 +29,13 @@ data class Post(
 			"title" to title,
 			"description" to description,
 			"itemCategory" to itemCategory,
+			"itemBrand" to itemBrand,
+			"itemFeatures" to itemFeatures,
 			"incidentDatetime" to incidentDatetime,
 			"locationText" to locationText,
 			"latitude" to latitude,
 			"longitude" to longitude,
+			"imageUrl" to imageUrl,     // <-- thêm vào map
 			"status" to status,
 			"viewCount" to viewCount,
 			"contactCount" to contactCount,
@@ -40,30 +43,26 @@ data class Post(
 			"updatedAt" to updatedAt,
 		)
 	}
+
 	companion object {
 		fun fromMap(map: Map<String, Any?>): Post {
 			return Post(
 				postId = map["postId"] as? String ?: "",
-
 				userId = (map["userId"] as? Number)?.toInt() ?: 0,
-
 				postType = map["postType"] as? String ?: "lost",
 				title = map["title"] as? String ?: "",
 				description = map["description"] as? String ?: "",
-
 				itemCategory = map["itemCategory"] as? String ?: "",
-
+				itemBrand = map["itemBrand"] as? String ?: "",
+				itemFeatures = map["itemFeatures"] as? String ?: "",
 				incidentDatetime = map["incidentDatetime"] as? String ?: "",
 				locationText = map["locationText"] as? String ?: "",
-
 				latitude = (map["latitude"] as? Number)?.toDouble() ?: 0.0,
 				longitude = (map["longitude"] as? Number)?.toDouble() ?: 0.0,
-
+				imageUrl = map["imageUrl"] as? String ?: "",   // <-- thêm vào fromMap
 				status = map["status"] as? String ?: "active",
-
 				viewCount = (map["viewCount"] as? Number)?.toInt() ?: 0,
 				contactCount = (map["contactCount"] as? Number)?.toInt() ?: 0,
-
 				createdAt = (map["createdAt"] as? Number)?.toLong() ?: 0L,
 				updatedAt = (map["updatedAt"] as? Number)?.toLong() ?: 0L,
 			)
