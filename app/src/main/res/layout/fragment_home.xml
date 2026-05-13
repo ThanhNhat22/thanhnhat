@@ -17,6 +17,38 @@
         android:background="@color/white"
         android:paddingBottom="24dp">
 
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:paddingStart="12dp"
+                android:gravity="center_vertical">
+
+                <!-- Avatar -->
+                <TextView
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:background="@drawable/bg_circle_blue"
+                    android:gravity="center"
+                    android:text="P"
+                    android:textColor="@android:color/white"
+                    android:textStyle="bold"/>
+
+                <!-- Input giả -->
+                <TextView
+                    android:id="@+id/tvCreatePost"
+                    android:layout_width="0dp"
+                    android:layout_height="40dp"
+                    android:layout_weight="1"
+                    android:layout_marginStart="8dp"
+                    android:background="@drawable/bg_input_fake"
+                    android:gravity="center_vertical"
+                    android:paddingStart="12dp"
+                    android:text="Tạo bài viết?"
+                    android:textColor="#888"/>
+            </LinearLayout>
+
       <HorizontalScrollView
           android:layout_width="match_parent"
           android:background="@color/white"
@@ -25,10 +57,11 @@
           >
           <com.google.android.material.chip.ChipGroup
               android:layout_marginStart="12dp"
-              android:layout_marginEnd="12dp"
               android:id="@+id/cgChip"
               android:layout_width="match_parent"
               app:singleSelection="true"
+              android:paddingTop="6dp"
+              android:paddingEnd="12dp"
               android:layout_height="wrap_content">
               <com.google.android.material.chip.Chip
                   android:layout_width="wrap_content"
@@ -37,6 +70,7 @@
                   app:chipBackgroundColor="@color/chip_bg_selector"
                   android:textColor="@color/chip_text_selector"
                   app:checkedIconVisible="true"
+
                   app:chipCornerRadius="16dp"
                   android:text="Tất cả"/>
               <com.google.android.material.chip.Chip
@@ -66,23 +100,56 @@
                   app:checkedIconVisible="true"
                   app:chipCornerRadius="16dp"
                   android:text="Gần tôi"/>
-              <com.google.android.material.chip.Chip
-                  android:checkable="true"
-                  android:layout_width="wrap_content"
-                  android:layout_height="wrap_content"
-                  app:chipBackgroundColor="@color/chip_bg_selector"
-                  android:textColor="@color/chip_text_selector"
-                  app:checkedIconVisible="true"
-                  app:chipCornerRadius="16dp"
-                  android:text="Khoảng cách"/>
           </com.google.android.material.chip.ChipGroup>
 
       </HorizontalScrollView>
-<!--        danh sách posts-->
-       <androidx.recyclerview.widget.RecyclerView
-           android:id="@+id/rvPosts"
-           android:layout_width="match_parent"
-           android:layout_height="wrap_content"/>
+      <!--Danh sách vip posts        -->
+      <LinearLayout
+          android:layout_width="match_parent"
+          android:orientation="vertical"
+          android:paddingTop="6dp"
+          android:layout_height="wrap_content">
+          <com.google.android.material.textview.MaterialTextView
+              android:layout_width="wrap_content"
+              android:layout_height="wrap_content"
+              android:text="Bài Đăng ưu tiên"
+              android:textSize="16sp"
+              android:paddingStart="12dp"
+              android:textColor="@color/black"
+              android:textStyle="bold"
+              />
+          <Space
+              android:layout_width="wrap_content"
+              android:layout_height="6dp"/>
+          <androidx.recyclerview.widget.RecyclerView
+              android:id="@+id/rvPostsSuggest"
+              android:layout_width="match_parent"
+              android:layout_height="wrap_content"/>
+      </LinearLayout>
+      <!--danh sách normal posts-->
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:orientation="vertical"
+            android:layout_height="match_parent">
+            <com.google.android.material.textview.MaterialTextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Bài đăng gần đây"
+                android:textSize="16sp"
+                android:paddingStart="12dp"
+                android:textColor="@color/black"
+                android:textStyle="bold"
+                />
+            <Space
+                android:layout_width="wrap_content"
+                android:layout_height="6dp"/>
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvPosts"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"/>
+        </LinearLayout>
+
         <View
             android:layout_width="match_parent"
             android:layout_height="100dp" />

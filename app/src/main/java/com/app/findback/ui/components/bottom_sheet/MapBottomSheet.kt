@@ -10,6 +10,7 @@ import android.view.ViewGroup
 import com.app.findback.R
 import com.app.findback.databinding.LayoutMapBottomSheetBinding
 import com.app.findback.domain.models.Post
+import com.app.findback.ui.activities.PostDetailActivity
 import com.app.findback.utils.extentions.ConvertTime
 
 class MapBottomSheet(private val post: Post) : BaseBottomSheet() {
@@ -32,6 +33,25 @@ class MapBottomSheet(private val post: Post) : BaseBottomSheet() {
     }
     //set evetnt
     private fun setEvent(){
+        setOnClick()
+    }
+    //set dữ liệu
+    private fun setData(){
+        if (post.postType == "lost") {
+            binding.textType.text = "Thất lạc"
+            binding.textType.setTextColor(resources.getColor(R.color.primary_red))
+        } else {
+            binding.textType.text = "Tìm thấy"
+            binding.textType.setTextColor(resources.getColor(R.color.primary_green))
+        }
+        binding.textTitle.text = post.title
+        binding.textLocation.text = post.locationText
+        binding.textDescription.text = post.description
+        binding.textDatetime.text = ConvertTime.formatTime(post.incidentDatetime)
+    }
+
+    //bắt xự kiê chuyển màn hình qua chi tiết bài post
+    private fun setOnClick(){
         binding.btnViewInGoogle.setOnClickListener {
             openGoogleMap(post.latitude, post.longitude)
         }
@@ -50,20 +70,13 @@ class MapBottomSheet(private val post: Post) : BaseBottomSheet() {
 
             startActivity(Intent.createChooser(intent, "Chia sẻ"))
         }
-    }
-    //set dữ liệu
-    private fun setData(){
-        if (post.postType == "lost") {
-            binding.textType.text = "Thất lạc"
-            binding.textType.setTextColor(resources.getColor(R.color.primary_red))
-        } else {
-            binding.textType.text = "Tìm thấy"
-            binding.textType.setTextColor(resources.getColor(R.color.primary_green))
-        }
-        binding.textTitle.text = post.title
-        binding.textLocation.text = post.locationText
-        binding.textDescription.text = post.description
-        binding.textDatetime.text = ConvertTime.formatTime(post.incidentDatetime)
+       binding.btnDetailPost.setOnClickListener {
+           val intent = Intent(requireContext(), PostDetailActivity::class.java)
+           intent.putExtra("postId", post.postId)
+           //cắm cờ
+           intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+           startActivity(intent)
+       }
     }
     //open bằng gg map
     fun openGoogleMap(lat: Double, lng: Double) {

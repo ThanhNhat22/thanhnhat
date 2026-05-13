@@ -46,9 +46,11 @@ open class BaseActivity : AppCompatActivity() {
         if (isShowSearch){
             titleView.visibility = View.GONE
             layoutSearch.visibility = View.VISIBLE
+            logoView.visibility = View.GONE
         } else {
             titleView.visibility = View.VISIBLE
             layoutSearch.visibility = View.GONE
+            logoView.visibility = View.VISIBLE
         }
 
 
@@ -103,7 +105,7 @@ open class BaseActivity : AppCompatActivity() {
 
             view.setPadding(0, topInset, 0, 0)
 
-            val height = 64.dpToPx()
+            val height = 48.dpToPx()
             view.layoutParams.height = height + topInset
 
             view.requestLayout()
@@ -124,7 +126,7 @@ open class BaseActivity : AppCompatActivity() {
 
             // clamp để không bị quá cao
             val safeInset = when {
-            inset > 40.dpToPx() -> 20.dpToPx()
+            inset > 24.dpToPx() -> 16.dpToPx()
             inset > 0 -> inset / 2
             else -> 0
         }

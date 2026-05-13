@@ -13,7 +13,7 @@ import kotlinx.coroutines.withContext
 
 class GeminiChatService {
     private val firebase = FirebaseChatAiDataSource()
-    private val apiKey = "AIzaSyCM6-j8zZ6jNK4mmzjgXh_Z0qv6YufuT-0"
+    private val apiKey = ""
     private val model = GenerativeModel(
         modelName = "gemini-2.5-flash",
         apiKey = apiKey

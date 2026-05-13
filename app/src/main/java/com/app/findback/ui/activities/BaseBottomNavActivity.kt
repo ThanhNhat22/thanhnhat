@@ -57,6 +57,11 @@ class BaseBottomNavActivity : BaseActivity() {
         getPosts()
     }
 
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        handleIntent(intent)
+    }
+
     //get data
     val getToolbar get() = binding.toolbarLayout.toolbar
     //set control
@@ -72,10 +77,10 @@ class BaseBottomNavActivity : BaseActivity() {
     private fun handleIntent(intent: Intent) {
         val data = intent?.data ?: return
         val tag = data.pathSegments[0]
-        val lat = data.pathSegments[2]
-        val lng = data.pathSegments[1]
         when(tag){
             "map" -> {
+                val lat = data.pathSegments[2]
+                val lng = data.pathSegments[1]
                 getLat = lat.toDouble()
                 getLng = lng.toDouble()
                 binding.bottomNav.selectedItemId = R.id.nav_map
@@ -88,6 +93,13 @@ class BaseBottomNavActivity : BaseActivity() {
                         .firstOrNull()
                     mapFragment?.zoomToPost(lat.toDouble(), lng.toDouble())
                 }
+            }
+            "post" -> {
+                val postId = data.pathSegments[1]
+                Log.d("BaseBottomNavActivity", "Received postId from intent: $postId")
+                val intent = Intent(this, PostDetailActivity::class.java)
+                intent.putExtra("postId", postId)
+                startActivity(intent)
             }
         }
     }

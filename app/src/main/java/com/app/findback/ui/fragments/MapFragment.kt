@@ -621,7 +621,6 @@ class MapFragment : Fragment(), ToolbarConfigProvider {
         isShowSearch = false
         binding.map.overlays.clear()
         _binding = null
-        postViewModel.removeListener()
         circleZoneViewModel.removeListener()
         super.onDestroyView()
     }

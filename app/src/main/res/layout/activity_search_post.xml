@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:orientation="vertical"
+    android:background="@color/white"
+    android:layout_height="match_parent"
+    tools:context=".ui.activities.SearchPostActivity">
+
+    <include
+        android:id="@+id/toolbarLayout"
+        layout="@layout/toolbar_cus"
+        android:visibility="visible"
+        />
+    <HorizontalScrollView
+        android:id="@+id/gChip"
+        android:layout_width="match_parent"
+        android:background="@color/white"
+        android:layout_height="wrap_content"
+        android:scrollbars="none"
+        android:visibility="gone"
+        >
+        <com.google.android.material.chip.ChipGroup
+            android:layout_marginStart="12dp"
+            android:id="@+id/cgChip"
+            android:layout_width="match_parent"
+            app:singleSelection="true"
+            android:paddingEnd="12dp"
+            android:layout_height="wrap_content"
+            android:visibility="visible"
+            >
+            <com.google.android.material.chip.Chip
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checkable="true"
+                app:chipBackgroundColor="@color/chip_bg_selector"
+                android:textColor="@color/chip_text_selector"
+                app:checkedIconVisible="true"
+                app:chipCornerRadius="16dp"
+                android:text="Bài viết"/>
+            <com.google.android.material.chip.Chip
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checkable="true"
+                app:chipBackgroundColor="@color/chip_bg_selector"
+                android:textColor="@color/chip_text_selector"
+                app:checkedIconVisible="true"
+                app:chipCornerRadius="16dp"
+                android:text="Mọi người"/>
+        </com.google.android.material.chip.ChipGroup>
+
+    </HorizontalScrollView>
+    <LinearLayout
+        android:id="@+id/tvNoResult"
+        android:layout_width="match_parent"
+        android:layout_gravity="center"
+        android:gravity="center"
+        android:visibility="gone"
+        android:layout_height="wrap_content">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@android:color/darker_gray"
+            android:text="Không tìm thấy kết quả nào"/>
+    </LinearLayout>
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvRecently"
+        android:background="@color/white"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvPost"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        />
+</LinearLayout>
