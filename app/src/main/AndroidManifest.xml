@@ -10,7 +10,10 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+
+
 
     <queries>
         <package android:name="com.google.android.apps.maps" />
@@ -31,7 +34,21 @@
         <activity
             android:name=".ui.activities.PostDetailActivity"
             android:exported="false" />
+        <meta-data
+            android:name="com.google.android.gms.version"
+            android:value="@integer/google_play_services_version" />
 
+
+        <meta-data
+            android:name="miui.smooth"
+            android:value="false" />
+        <activity
+            android:name=".LoginActivity"
+            android:exported="true"
+            android:launchMode="singleTask" />
+        <activity
+            android:name=".RegisterActivity"
+            android:exported="false" />
         <receiver
             android:name=".ui.receiver.MapReceiver"
             android:enabled="true"
@@ -41,8 +58,8 @@
                 <action android:name="android.provider.Telephony.SMS_RECEIVED" />
             </intent-filter>
         </receiver>
-        <activity android:name=".ui.activities.TestChatActivity"
-            android:exported="true"/>
+
+
         <activity
             android:name=".ui.activities.ChatAIActivity"
             android:exported="false"
@@ -79,6 +96,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
     </application>
 
 </manifest>

@@ -4,7 +4,6 @@ import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
-import android.view.View
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
@@ -26,7 +25,6 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
 import com.google.android.gms.location.LocationServices
 import androidx.core.net.toUri
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -39,6 +37,12 @@ class ChatActivity : BaseActivity() {
         const val EXTRA_OTHER_USER_ID = "other_user_id"
         const val EXTRA_OTHER_USER_NAME = "other_user_name"
         const val EXTRA_OTHER_USER_AVATAR = "other_user_avatar"
+
+        // Extra cho preview bài post từ PostDetail
+        const val EXTRA_SEND_POST_ID = "SEND_POST_ID"
+        const val EXTRA_SEND_POST_TITLE = "SEND_POST_TITLE"
+        const val EXTRA_SEND_POST_IMAGE = "SEND_POST_IMAGE"
+        const val EXTRA_SEND_POST_DESC = "SEND_POST_DESC"
     }
 
     private lateinit var binding: ActivityChatBinding
@@ -50,31 +54,26 @@ class ChatActivity : BaseActivity() {
     private val otherUserId by lazy { intent.getStringExtra(EXTRA_OTHER_USER_ID) ?: "" }
     private val otherUserName by lazy { intent.getStringExtra(EXTRA_OTHER_USER_NAME) ?: "Chat" }
     private val otherUserAvatar by lazy { intent.getStringExtra(EXTRA_OTHER_USER_AVATAR) ?: "" }
+
     private val conversationId by lazy {
-        intent.getStringExtra(EXTRA_CONVERSATION_ID)
-            ?: viewModel.getConversationId(otherUserId)
-    }
-    private val currentUserId: String by lazy {
-        FirebaseAuth.getInstance().currentUser?.uid ?: ""
+        intent.getStringExtra(EXTRA_CONVERSATION_ID) ?: viewModel.getConversationId(otherUserId)
     }
 
+    private var pendingPost: MessagePost? = null
+
     private val chatAdapter by lazy {
-        // Phai dam bao currentUserId da co truoc khi tao adapter
-        val uid = FirebaseAuth.getInstance().currentUser?.uid ?: ""
         ChatAdapter(
-            currentUserId = uid,
+            currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: "",
             onLocationClick = { lat, lng -> openGoogleMaps(lat, lng) },
             onPostClick = { postId -> openPostDetail(postId) }
         )
     }
 
-    // ─── Launchers ────────────────────────────────────────────────────────────
-
+    // Launchers
     private val locationPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
-    ) { granted: Boolean ->
-        if (granted) fetchAndSendLocation()
-        else showToast("Cannot access location")
+    ) { granted ->
+        if (granted) fetchAndSendLocation() else showToast("Không có quyền vị trí")
     }
 
     private val postPickerLauncher = registerForActivityResult(
@@ -95,8 +94,6 @@ class ChatActivity : BaseActivity() {
         }
     }
 
-    // ─── Lifecycle ────────────────────────────────────────────────────────────
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityChatBinding.inflate(layoutInflater)
@@ -109,37 +106,101 @@ class ChatActivity : BaseActivity() {
         observeMessages()
         observeSendState()
 
+        viewModel.loadMessages(
+            conversationId,
+            FirebaseAuth.getInstance().currentUser?.uid ?: ""
+        )
 
-        viewModel.loadMessages(conversationId)
-
+        handlePostPreviewFromDetail()
     }
 
-    // ─── Setup ────────────────────────────────────────────────────────────────
+    private fun handlePostPreviewFromDetail() {
+        val postId = intent.getStringExtra(EXTRA_SEND_POST_ID)
+        if (postId.isNullOrEmpty()) return
+
+        pendingPost = MessagePost(
+            postId = postId,
+            title = intent.getStringExtra(EXTRA_SEND_POST_TITLE) ?: "",
+            imageUrl = intent.getStringExtra(EXTRA_SEND_POST_IMAGE) ?: "",
+            description = intent.getStringExtra(EXTRA_SEND_POST_DESC) ?: ""
+        )
+        showPostPreview()
+    }
+
+    private fun showPostPreview() {
+        pendingPost?.let { post ->
+            binding.layoutPostPreview.isVisible = true
+
+            binding.tvPreviewPostTitle.text = post.title
+            binding.tvPreviewPostDesc.text = post.description.take(100) +
+                    if (post.description.length > 100) "..." else ""
+
+            Glide.with(this)
+                .load(post.imageUrl.ifEmpty { null })
+                .apply(RequestOptions().error(R.drawable.ic_post))
+                .into(binding.ivPreviewPostImage)
+
+            binding.btnSendPostPreview.setOnClickListener {
+                viewModel.sendPostMessage(otherUserId, post)
+                hidePostPreview()
+            }
+
+            binding.btnCancelPostPreview.setOnClickListener {
+                hidePostPreview()
+            }
+        }
+    }
+
+    private fun hidePostPreview() {
+        binding.layoutPostPreview.isVisible = false
+        pendingPost = null
+    }
 
     private fun setupToolbar() {
         binding.tvToolbarName.text = otherUserName
-        Glide.with(applicationContext)
+        Glide.with(this)
             .load(otherUserAvatar.ifEmpty { null })
-            .apply(
-                RequestOptions.circleCropTransform()
-                    .error(R.drawable.ic_default_avatar)
-            )
+            .apply(RequestOptions.circleCropTransform().error(R.drawable.ic_default_avatar))
             .into(binding.ivToolbarAvatar)
-        binding.btnBack.setOnClickListener { finish() }
-    }
 
+        binding.btnBack.setOnClickListener {
+            if (intent.getBooleanExtra("from_post_detail", false)) {
+                setResult(
+                    RESULT_OK,
+                    Intent().apply {
+                        putExtra("open_message_tab", true)
+                    }
+                )
+                finish()
+            } else {
+                finish()
+            }
+        }
+    }
+    @Suppress("DEPRECATION")
+    override fun onBackPressed() {
+        if (intent.getBooleanExtra("from_post_detail", false)) {
+            setResult(
+                RESULT_OK,
+                Intent().apply {
+                    putExtra("open_message_tab", true)
+                }
+            )
+            finish()
+        } else {
+            super.onBackPressed()
+        }
+    }
     private fun setupRecyclerView() {
         binding.rvMessages.apply {
-            layoutManager = LinearLayoutManager(this@ChatActivity).apply {
-                stackFromEnd = true
-            }
+            layoutManager = LinearLayoutManager(this@ChatActivity).apply { stackFromEnd = true }
             adapter = chatAdapter
         }
     }
 
     private fun setupInput() {
         binding.btnSend.setOnClickListener {
-            val text = binding.etMessage.text.toString()
+            val text = binding.etMessage.text.toString().trim()
             if (text.isNotBlank()) {
                 viewModel.sendTextMessage(otherUserId, text)
                 binding.etMessage.setText("")
@@ -147,10 +208,8 @@ class ChatActivity : BaseActivity() {
         }
 
         binding.btnSendLocation.setOnClickListener {
-            if (ContextCompat.checkSelfPermission(
-                    this, Manifest.permission.ACCESS_FINE_LOCATION
-                ) == PackageManager.PERMISSION_GRANTED
-            ) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED) {
                 fetchAndSendLocation()
             } else {
                 locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
@@ -166,15 +225,12 @@ class ChatActivity : BaseActivity() {
         }
     }
 
-    // ─── Observe ──────────────────────────────────────────────────────────────
-
     private fun observeMessages() {
         lifecycleScope.launch {
             viewModel.messages.collectLatest { messages ->
                 chatAdapter.submitList(messages) {
                     if (messages.isNotEmpty()) {
                         binding.rvMessages.scrollToPosition(messages.size - 1)
-                        // markAsRead chi khi co tin nhan thuc su
                         viewModel.markAsRead(conversationId)
                     }
                 }
@@ -190,8 +246,6 @@ class ChatActivity : BaseActivity() {
         }
     }
 
-    // ─── Location ─────────────────────────────────────────────────────────────
-
     private fun fetchAndSendLocation() {
         val client = LocationServices.getFusedLocationProviderClient(this)
         try {
@@ -200,21 +254,16 @@ class ChatActivity : BaseActivity() {
                     val msgLocation = MessageLocation(
                         latitude = location.latitude,
                         longitude = location.longitude,
-                        address = String.format(
-                            Locale.getDefault(),
-                            "Chia sẻ vị trí hiện tại.",
-                            location.latitude,
-                            location.longitude
-                        )
+                        address = "Chia sẻ vị trí hiện tại"
                     )
                     viewModel.sendLocationMessage(otherUserId, msgLocation)
                     binding.layoutExtraActions.isVisible = false
                 } else {
-                    showToast("Could not get location")
+                    showToast("Không lấy được vị trí")
                 }
             }
         } catch (_: SecurityException) {
-            showToast("Location permission error")
+            showToast("Lỗi quyền vị trí")
         }
     }
 
@@ -230,12 +279,14 @@ class ChatActivity : BaseActivity() {
         }
     }
 
-    // ─── Helpers ──────────────────────────────────────────────────────────────
-
     private fun openPostDetail(postId: String) {
-        showToast("Post: $postId")
+        val intent = Intent(this, PostDetailActivity::class.java).apply {
+            putExtra("postId", postId)
+        }
+        startActivity(intent)
     }
 
-    private fun showToast(msg: String) =
-        Toast.makeText(applicationContext, msg, Toast.LENGTH_SHORT).show()
+    private fun showToast(msg: String) {
+        Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
+    }
 }

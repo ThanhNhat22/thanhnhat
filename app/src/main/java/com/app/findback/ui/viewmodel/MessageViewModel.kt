@@ -48,11 +48,17 @@ class MessageViewModel(
         }
     }
 
-    fun loadMessages(conversationId: String) {
+    fun loadMessages(
+        conversationId: String,
+        currentUserId: String
+    ) {
         viewModelScope.launch {
-            repository.getMessages(conversationId)
-                .catch { /* handle error */ }
-                .collect { _messages.value = it }
+            repository.getMessages(
+                conversationId,
+                currentUserId
+            ).collect {
+                _messages.value = it
+            }
         }
     }
 
@@ -87,26 +93,45 @@ class MessageViewModel(
     }
 
     fun sendPostMessage(receiverId: String, post: MessagePost) {
-        val convId = repository.getOrCreateConversationId(currentUserId, receiverId)
-        sendMessage(
-            Message(
-                conversationId = convId,
-                senderId = currentUserId,
-                receiverId = receiverId,
-                type = MessageType.POST,
-                content = post.title,
-                post = post,
-                timestamp = System.currentTimeMillis()
-            )
+        if (receiverId.isBlank() || post.postId.isBlank()) {
+            _sendState.tryEmit(SendState.Error("Thiếu thông tin bài viết"))
+            return
+        }
+
+        val convId = getConversationId(receiverId)
+
+        val message = Message(
+            messageId = "",
+            conversationId = convId,
+            senderId = currentUserId,
+            receiverId = receiverId,
+            type = MessageType.POST,
+            content = "Đã chia sẻ một bài đăng",
+            timestamp = System.currentTimeMillis(),
+            isRead = false,
+            post = post,
+            location = null
         )
+
+        sendMessage(message)
     }
 
     private fun sendMessage(message: Message) {
         viewModelScope.launch {
             _sendState.emit(SendState.Loading)
+
+            val currentList = _messages.value.toMutableList()
+            currentList.add(message)
+            _messages.value = currentList.sortedBy { it.timestamp }
+
             repository.sendMessage(message)
-                .onSuccess { _sendState.emit(SendState.Success) }
-                .onFailure { _sendState.emit(SendState.Error(it.message ?: "Send failed")) }
+                .onSuccess {
+                    _sendState.emit(SendState.Success)
+                }
+                .onFailure { e ->
+                    _sendState.emit(SendState.Error(e.message ?: "Gửi thất bại"))
+                    _messages.value = _messages.value.filter { it.messageId != message.messageId }
+                }
         }
     }
 

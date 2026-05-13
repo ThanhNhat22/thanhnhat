@@ -6,31 +6,78 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
-import kotlin.math.min
-import kotlin.math.max
+import com.onesignal.OneSignal
+import okhttp3.*
+import okhttp3.MediaType.Companion.toMediaType
+import org.json.JSONArray
+import org.json.JSONObject
 
 class FirebaseMessageDataSource {
-
+    private val client = OkHttpClient()
     private val db = FirebaseDatabase.getInstance().reference
 
-    // ─── Messages ────────────────────────────────────────────────────────────
+    //info users
 
-    fun getMessages(conversationId: String): Flow<List<Message>> = callbackFlow {
-        val ref = db.child("messages").child(conversationId)
+    data class UserInfo(
+        val fullName: String,
+        val avatar: String
+    )
+
+    //lay thong tin tu bang user
+    private suspend fun getUserInfo(userId: String): UserInfo {
+        return try {
+            val snapshot = db.child("users").child(userId).get().await()
+            UserInfo(
+                fullName = snapshot.child("fullName").getValue(String::class.java)
+                    ?: "Người dùng",
+                avatar = snapshot.child("avatar").getValue(String::class.java)
+                    ?: snapshot.child("photoUrl").getValue(String::class.java)
+                    ?: ""
+            )
+        } catch (e: Exception) {
+            UserInfo(fullName = "Người dùng", avatar = "")
+        }
+    }
+
+    // mess
+
+    fun getMessages(
+        conversationId: String,
+        currentUserId: String
+    ): Flow<List<Message>> = callbackFlow {
+
+        val convRef = db.child("conversations").child(conversationId)
+        val msgRef = db.child("messages").child(conversationId)
             .orderByChild("timestamp")
 
         val listener = object : ValueEventListener {
+
             override fun onDataChange(snapshot: DataSnapshot) {
-                val list = snapshot.children.mapNotNull { it.toMessage() }
-                trySend(list)
+
+                convRef.get().addOnSuccessListener { convSnap ->
+
+                    val deletedTime =
+                        convSnap.child("deleted_$currentUserId")
+                            .getValue(Long::class.java) ?: 0L
+
+                    val list = snapshot.children
+                        .mapNotNull { it.toMessage() }
+                        .filter { it.timestamp > deletedTime }
+
+                    trySend(list)
+                }
             }
 
             override fun onCancelled(error: DatabaseError) {
                 close(error.toException())
             }
         }
-        ref.addValueEventListener(listener)
-        awaitClose { ref.removeEventListener(listener) }
+
+        msgRef.addValueEventListener(listener)
+
+        awaitClose {
+            msgRef.removeEventListener(listener)
+        }
     }
 
     suspend fun sendMessage(message: Message) {
@@ -40,13 +87,13 @@ class FirebaseMessageDataSource {
 
         convRef.child(msgId).setValue(finalMsg.toMap()).await()
         updateConversation(finalMsg)
+        sendPushNotification(finalMsg)
     }
 
     private suspend fun updateConversation(message: Message) {
         val convId = message.conversationId
         val convRef = db.child("conversations").child(convId)
 
-        // Luôn sắp xếp user1 < user2 để tránh đảo chiều
         val user1 = minOf(message.senderId, message.receiverId)
         val user2 = maxOf(message.senderId, message.receiverId)
 
@@ -54,45 +101,72 @@ class FirebaseMessageDataSource {
             MessageType.TEXT -> message.content
             MessageType.LOCATION -> "Đã gửi vị trí"
             MessageType.POST -> "Đã gửi bài đăng"
+            else -> message.content
         }
+
+
+        val otherId = if (message.senderId == user1) user2 else user1
+        val userInfo = getUserInfo(otherId)
 
         val updates = mapOf<String, Any?>(
             "conversationId" to convId,
             "user1Id" to user1,
             "user2Id" to user2,
+            "otherUserName" to userInfo.fullName,
+            "otherUserAvatar" to userInfo.avatar,
             "lastMessage" to lastMsgText,
             "lastMessageType" to message.type.name,
             "lastMessageTime" to message.timestamp,
-            "lastMessageSenderId" to message.senderId
-            // "createdAt" có thể set chỉ lần đầu nếu cần
+            "lastMessageSenderId" to message.senderId,
+            "deleted_${message.senderId}" to 0,
         )
 
         convRef.updateChildren(updates).await()
 
-        // Tăng unread cho người nhận (không tăng cho chính mình)
         if (message.receiverId != message.senderId) {
             convRef.child("unread_${message.receiverId}")
                 .setValue(ServerValue.increment(1)).await()
         }
     }
 
-    // ─── Conversations ────────────────────────────────────────────────────────
+    // CONVERSATIONS
 
-    fun getConversations(userId: String): Flow<List<Conversation>> = callbackFlow {
+    fun getConversations(currentUserId: String): Flow<List<Conversation>> = callbackFlow {
         val ref = db.child("conversations")
             .orderByChild("lastMessageTime")
 
         val listener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-                val list = snapshot.children
-                    .mapNotNull { it.toConversation(userId) }
-                    .filter { conv ->
-                        (conv.user1Id == userId || conv.user2Id == userId) &&
-                                !isDeletedByUser(snapshot.child(conv.conversationId), userId)
-                    }
-                    .sortedByDescending { it.lastMessageTime }
+                val conversations = mutableListOf<Conversation>()
 
-                trySend(list)
+                for (child in snapshot.children) {
+
+                    val conv = child.toBasicConversation(currentUserId)
+                        ?: continue
+
+                    if (conv.user1Id != currentUserId &&
+                        conv.user2Id != currentUserId
+                    ) continue
+
+                    val deletedTime =
+                        child.child("deleted_$currentUserId")
+                            .getValue(Long::class.java) ?: 0L
+
+
+                    if (deletedTime == 0L) {
+                        conversations.add(conv)
+                        continue
+                    }
+
+                    val hasNewMessage =
+                        conv.lastMessageTime >= deletedTime
+
+                    if (hasNewMessage) {
+                        conversations.add(conv)
+                    }
+                }
+
+                trySend(conversations.sortedByDescending { it.lastMessageTime })
             }
 
             override fun onCancelled(error: DatabaseError) {
@@ -108,6 +182,43 @@ class FirebaseMessageDataSource {
         return snapshot.child("deleted_$userId").getValue(Boolean::class.java) ?: false
     }
 
+    // Mapper cơ bản
+    private fun DataSnapshot.toBasicConversation(currentUserId: String): Conversation? {
+        return try {
+            val map = value as? Map<*, *> ?: return null
+            val convId = map["conversationId"] as? String ?: key ?: ""
+
+            val u1 = map["user1Id"] as? String ?: ""
+            val u2 = map["user2Id"] as? String ?: ""
+            val otherId = if (u1 == currentUserId) u2 else u1
+
+
+            val otherName = when {
+                (map["otherUserName"] as? String)?.isNotBlank() == true -> map["otherUserName"] as String
+                else -> "Người dùng"
+            }
+
+            Conversation(
+                conversationId = convId,
+                user1Id = u1,
+                user2Id = u2,
+                otherUserName = otherName,
+                otherUserAvatar = map["otherUserAvatar"] as? String ?: "",
+                lastMessage = map["lastMessage"] as? String ?: "",
+                lastMessageType = MessageType.valueOf(
+                    map["lastMessageType"] as? String ?: "TEXT"
+                ),
+                lastMessageTime = (map["lastMessageTime"] as? Number)?.toLong() ?: 0L,
+                unreadCount = (map["unread_$currentUserId"] as? Number)?.toInt() ?: 0,
+                lastMessageSenderId = map["lastMessageSenderId"] as? String ?: "",
+                createdAt = (map["createdAt"] as? Number)?.toLong() ?: 0L
+            )
+        } catch (e: Exception) {
+            null
+        }
+    }
+    // helper
+
     suspend fun markAsRead(conversationId: String, userId: String) {
         db.child("conversations")
             .child(conversationId)
@@ -118,7 +229,11 @@ class FirebaseMessageDataSource {
     suspend fun deleteConversation(conversationId: String, userId: String) {
         val convRef = db.child("conversations").child(conversationId)
 
-        convRef.child("deleted_$userId").setValue(true).await()
+        val deleteTime = System.currentTimeMillis()
+
+        convRef.child("deleted_$userId")
+            .setValue(deleteTime)
+            .await()
 
         val snapshot = convRef.get().await()
         val map = snapshot.value as? Map<*, *> ?: return
@@ -127,9 +242,12 @@ class FirebaseMessageDataSource {
         val u2 = map["user2Id"] as? String ?: ""
 
         val otherId = if (u1 == userId) u2 else u1
-        val otherDeleted = map["deleted_$otherId"] as? Boolean ?: false
 
-        if (otherDeleted) {
+        val otherDeleted =
+            (map["deleted_$otherId"] as? Number)?.toLong() ?: 0L
+
+
+        if (otherDeleted > 0L) {
             convRef.removeValue().await()
             db.child("messages").child(conversationId).removeValue().await()
         }
@@ -140,7 +258,6 @@ class FirebaseMessageDataSource {
         return "${sorted[0]}_${sorted[1]}"
     }
 
-    // ─── Mapper ─────────────────────────────────────────────────────────────
 
     private fun DataSnapshot.toMessage(): Message? {
         return try {
@@ -178,39 +295,6 @@ class FirebaseMessageDataSource {
         }
     }
 
-    private fun DataSnapshot.toConversation(currentUserId: String): Conversation? {
-        return try {
-            val map = value as? Map<*, *> ?: return null
-            val convId = map["conversationId"] as? String ?: key ?: ""
-
-            val u1 = map["user1Id"] as? String ?: ""
-            val u2 = map["user2Id"] as? String ?: ""
-
-            val unread = (map["unread_$currentUserId"] as? Number)?.toInt() ?: 0
-
-            val otherUserName = map["otherUserName"] as? String
-                ?: if (u1 == currentUserId) u2 else u1
-
-            Conversation(
-                conversationId = convId,
-                user1Id = u1,
-                user2Id = u2,
-                otherUserName = otherUserName,
-                otherUserAvatar = map["otherUserAvatar"] as? String ?: "",
-                lastMessage = map["lastMessage"] as? String ?: "",
-                lastMessageType = MessageType.valueOf(
-                    map["lastMessageType"] as? String ?: "TEXT"
-                ),
-                lastMessageTime = (map["lastMessageTime"] as? Number)?.toLong() ?: 0L,
-                unreadCount = unread,
-                lastMessageSenderId = map["lastMessageSenderId"] as? String ?: "",
-                createdAt = (map["createdAt"] as? Number)?.toLong() ?: 0L
-            )
-        } catch (e: Exception) {
-            null
-        }
-    }
-
     private fun Message.toMap(): Map<String, Any?> = mapOf(
         "messageId" to messageId,
         "conversationId" to conversationId,
@@ -232,4 +316,93 @@ class FirebaseMessageDataSource {
             )
         }
     )
+
+    private suspend fun sendPushNotification(message: Message) {
+        try {
+            val receiverSnapshot = db
+                .child("users")
+                .child(message.receiverId)
+                .get()
+                .await()
+
+            val playerId =
+                receiverSnapshot
+                    .child("playerId")
+                    .getValue(String::class.java)
+                    ?: return
+
+            val senderName =
+                receiverSnapshot
+                    .child("fullName")
+                    .getValue(String::class.java)
+                    ?: "Tin nhắn mới"
+
+            val json = JSONObject()
+
+            json.put(
+                "app_id",
+                "bdf5516d-cd73-4dd2-b189-c429f8311bd5"
+            )
+
+            json.put(
+                "include_player_ids",
+                JSONArray().put(playerId)
+            )
+
+            json.put(
+                "headings",
+                JSONObject().put("en", senderName)
+            )
+
+            json.put(
+                "contents",
+                JSONObject().put("en", message.content)
+            )
+
+            json.put(
+                "priority",
+                10
+            )
+
+            json.put(
+                "data",
+                JSONObject().apply {
+
+                    put(
+                        "conversationId",
+                        message.conversationId
+                    )
+
+                    put(
+                        "otherUserId",
+                        message.senderId
+                    )
+
+                    put(
+                        "otherUserName",
+                        senderName
+                    )
+                }
+            )
+
+            val body = RequestBody.create(
+                "application/json; charset=utf-8".toMediaType(),
+                json.toString()
+            )
+
+            val request = Request.Builder()
+                .url("https://onesignal.com/api/v1/notifications")
+                .post(body)
+                .addHeader(
+                    "Authorization",
+                    "Basic os_v2_app_xx2vc3onong5fmmjyqu7qmi32xxykobdgffu6unjih23btge7fr7fxojprnciimgbuwhyfis22rlywphpl7icgnxredk3mwd4e56yzi"
+                )
+                .build()
+
+            client.newCall(request).execute()
+
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
 }

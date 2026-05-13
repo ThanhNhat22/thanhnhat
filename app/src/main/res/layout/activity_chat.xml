@@ -68,9 +68,87 @@
         android:paddingVertical="8dp"
         android:scrollbars="none"
         app:layout_constraintTop_toBottomOf="@id/dividerToolbar"
-        app:layout_constraintBottom_toTopOf="@id/layoutInput"
+        app:layout_constraintBottom_toTopOf="@id/layoutPostPreview"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- POST PREVIEW LAYOUT (quan trọng) -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/layoutPostPreview"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="8dp"
+        android:layout_marginBottom="8dp"
+        android:visibility="gone"
+        app:cardCornerRadius="12dp"
+        app:cardElevation="6dp"
+        app:layout_constraintBottom_toTopOf="@id/layoutExtraActions"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="12dp">
+
+            <TextView
+                android:id="@+id/tvPreviewPostTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textStyle="bold"
+                android:textSize="16sp"
+                android:textColor="@color/black" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="8dp">
+
+                <ImageView
+                    android:id="@+id/ivPreviewPostImage"
+                    android:layout_width="80dp"
+                    android:layout_height="80dp"
+                    android:scaleType="centerCrop"
+                    android:background="@drawable/ic_post" />
+
+                <TextView
+                    android:id="@+id/tvPreviewPostDesc"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="12dp"
+                    android:textSize="14sp"
+                    android:textColor="@android:color/darker_gray" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="12dp">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnCancelPostPreview"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:text="Hủy"
+                    style="@style/Widget.Material3.Button.OutlinedButton" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnSendPostPreview"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:text="Gửi bài viết"
+                    android:backgroundTint="@color/primary" />
+
+            </LinearLayout>
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
 
     <!-- Extra actions (location, post) -->
     <LinearLayout

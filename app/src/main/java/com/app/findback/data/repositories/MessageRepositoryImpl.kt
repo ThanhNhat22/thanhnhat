@@ -10,8 +10,15 @@ class MessageRepositoryImpl(
     private val dataSource: FirebaseMessageDataSource
 ) : MessageRepository {
 
-    override fun getMessages(conversationId: String): Flow<List<Message>> =
-        dataSource.getMessages(conversationId)
+    override fun getMessages(
+        conversationId: String,
+        currentUserId: String
+    ): Flow<List<Message>> {
+        return dataSource.getMessages(
+            conversationId,
+            currentUserId
+        )
+    }
 
     override fun getConversations(userId: String): Flow<List<Conversation>> =
         dataSource.getConversations(userId)

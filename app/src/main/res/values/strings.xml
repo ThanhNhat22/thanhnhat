@@ -20,4 +20,14 @@
     <string name="hint_message">Nhắn tin...</string>
     <string name="user_avatar">Ảnh đại diện</string>
     <string name="pick_post">Chọn bài đăng</string>
+    <string name="post_detail_title">Chi tiết bài đăng</string>
+    <string name="search_post_title">Tìm kiếm bài đăng</string>
+    <string name="login">Đăng nhập</string>
+    <string name="email_or_phone">Email hoặc Số điện thoại</string>
+    <string name="password">Mật khẩu</string>
+    <string name="forgot_password">Quên mật khẩu?</string>
+    <string name="btn_login">ĐĂNG NHẬP</string>
+    <string name="btn_register">ĐĂNG KÝ</string>
+    <string name="register_now">Đăng ký</string>
+    <string name="no_account">Chưa có tài khoản?</string>
 </resources>

@@ -22,21 +22,31 @@ class ConversationAdapter(
         RecyclerView.ViewHolder(b.root) {
 
         fun bind(item: Conversation) {
-            b.tvName.text = item.otherUserName.ifEmpty { "Nguoi dung" }
-            b.tvLastMessage.text = when (item.lastMessageType) {
-                MessageType.TEXT -> item.lastMessage
-                MessageType.LOCATION -> "Gửi vị trí"
-                MessageType.POST -> "Gửi bài đăng"
+            // Hiển thị tên người dùng
+            b.tvName.text = when {
+                item.otherUserName.isNotBlank() && item.otherUserName.length < 30 -> item.otherUserName
+                else -> "Người dùng"
             }
+
+            // Last message
+            b.tvLastMessage.text = when (item.lastMessageType) {
+                MessageType.TEXT -> item.lastMessage.ifEmpty { "Tin nhắn mới" }
+                MessageType.LOCATION -> " Đã gửi vị trí"
+                MessageType.POST -> " Đã gửi bài đăng"
+            }
+
+            // Thời gian
             b.tvTime.text = item.lastMessageTime.toTimeString()
 
+            // Unread count
             if (item.unreadCount > 0) {
-                b.tvUnreadCount.text = item.unreadCount.toString()
+                b.tvUnreadCount.text = if (item.unreadCount > 99) "99+" else item.unreadCount.toString()
                 b.tvUnreadCount.visibility = android.view.View.VISIBLE
             } else {
                 b.tvUnreadCount.visibility = android.view.View.GONE
             }
 
+            // Avatar
             Glide.with(b.ivAvatar.context)
                 .load(item.otherUserAvatar.ifEmpty { null })
                 .apply(
@@ -54,26 +64,30 @@ class ConversationAdapter(
         ItemConversationBinding.inflate(LayoutInflater.from(parent.context), parent, false)
     )
 
-    override fun onBindViewHolder(holder: VH, position: Int) =
+    override fun onBindViewHolder(holder: VH, position: Int) {
         holder.bind(getItem(position))
+    }
 
     private fun Long.toTimeString(): String {
         if (this == 0L) return ""
+
         val now = System.currentTimeMillis()
         val diff = now - this
+
         return when {
-            diff < 60_000 -> "Just now"
-            diff < 3_600_000 -> "${diff / 60_000}m"
-            diff < 86_400_000 -> "${diff / 3_600_000}h"
+            diff < 60_000 -> "Vừa xong"
+            diff < 3_600_000 -> "${diff / 60_000} phút"
+            diff < 86_400_000 -> "${diff / 3_600_000} giờ"
             else -> SimpleDateFormat("dd/MM", Locale.getDefault()).format(Date(this))
         }
     }
 
     companion object {
         val DIFF = object : DiffUtil.ItemCallback<Conversation>() {
-            override fun areItemsTheSame(a: Conversation, b: Conversation) =
-                a.conversationId == b.conversationId
-            override fun areContentsTheSame(a: Conversation, b: Conversation) = a == b
+            override fun areItemsTheSame(old: Conversation, new: Conversation) =
+                old.conversationId == new.conversationId
+
+            override fun areContentsTheSame(old: Conversation, new: Conversation) = old == new
         }
     }
 }

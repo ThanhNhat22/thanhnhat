@@ -2,7 +2,9 @@ package com.app.findback.domain.models
 
 data class Post(
 	val postId: String = "",
-	val userId: Int = 0,
+	val userId: String = "",
+	val userName: String = "",
+	val userAvatar: String = "",
 	val postType: String = "lost",
 	val title: String = "",
 	val description: String = "",
@@ -13,7 +15,7 @@ data class Post(
 	val locationText: String = "",
 	val latitude: Double = 0.0,
 	val longitude: Double = 0.0,
-	val imageUrl: String = "",          // <-- thêm field này
+	val imageUrl: String = "",
 	val status: String = "active",
 	val viewCount: Int = 0,
 	val contactCount: Int = 0,
@@ -25,6 +27,8 @@ data class Post(
 		return mapOf(
 			"postId" to postId,
 			"userId" to userId,
+			"userName" to userName,
+			"userAvatar" to userAvatar,
 			"postType" to postType,
 			"title" to title,
 			"description" to description,
@@ -48,7 +52,9 @@ data class Post(
 		fun fromMap(map: Map<String, Any?>): Post {
 			return Post(
 				postId = map["postId"] as? String ?: "",
-				userId = (map["userId"] as? Number)?.toInt() ?: 0,
+				userId = map["userId"] as? String ?: "",
+				userName = map["userName"] as? String ?: "",
+				userAvatar = map["userAvatar"] as? String ?: "",
 				postType = map["postType"] as? String ?: "lost",
 				title = map["title"] as? String ?: "",
 				description = map["description"] as? String ?: "",
@@ -68,4 +74,5 @@ data class Post(
 			)
 		}
 	}
+	fun isMyPost(currentUserId: String): Boolean = this.userId == currentUserId
 }

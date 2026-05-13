@@ -33,7 +33,7 @@ class BaseBottomNavActivity : BaseActivity() {
     private val mapFragment = MapFragment()
     private val messageFragment = MessageFragment()
     private val profileFragment = ProfileFragment()
-    private var activeFragment: Fragment = homeFragment
+    private lateinit var activeFragment: Fragment
     private val fragmentByItemId: Map<Int, Fragment> by lazy {
         mapOf(
             R.id.nav_home to homeFragment,
@@ -52,6 +52,9 @@ class BaseBottomNavActivity : BaseActivity() {
         setContentView(binding.root)
         setupDraggableAiChat()
         setBottomNav()
+        if (intent.getBooleanExtra("open_message_tab", false)) {
+            openMessageFragment()
+        }
         setBottomNavInsert()
         handleIntent(intent)
         getPosts()
@@ -59,6 +62,10 @@ class BaseBottomNavActivity : BaseActivity() {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
+        setIntent(intent)
+        if (intent.getBooleanExtra("open_message_tab", false)) {
+            openMessageFragment()
+        }
         handleIntent(intent)
     }
 
@@ -105,35 +112,70 @@ class BaseBottomNavActivity : BaseActivity() {
     }
     //set bottomnav
     private fun setBottomNav() {
+
         binding.bottomNav.itemIconTintList = null
         binding.bottomNav.itemTextColor = createBottomNavTextColors()
 
+        val openMessage =
+            intent.getBooleanExtra("open_message_tab", false)
 
-        setBottomNavIcons(R.id.nav_home)
+        val defaultFragment =
+            if (openMessage) messageFragment
+            else homeFragment
 
-        //làm cấu trúc bottomnav lần đầu
+        val defaultTab =
+            if (openMessage) R.id.nav_message
+            else R.id.nav_home
+
+        activeFragment = defaultFragment
+
         supportFragmentManager.beginTransaction()
             .add(R.id.fragmentContainer, homeFragment, "homeFragment")
-            .add(R.id.fragmentContainer, mapFragment, "mapFragment").hide(mapFragment)
-            .add(R.id.fragmentContainer, messageFragment, "messageFragment").hide(messageFragment)
-            .add(R.id.fragmentContainer, profileFragment, "profileFragment").hide(profileFragment)
+            .add(R.id.fragmentContainer, mapFragment, "mapFragment")
+            .hide(mapFragment)
+            .add(R.id.fragmentContainer, messageFragment, "messageFragment")
+            .add(R.id.fragmentContainer, profileFragment, "profileFragment")
+            .hide(profileFragment)
+            .apply {
+
+                when (defaultFragment) {
+
+                    homeFragment -> {
+                        hide(messageFragment)
+                    }
+
+                    messageFragment -> {
+                        hide(homeFragment)
+                    }
+                }
+            }
             .commit()
 
-        //bắt sự kiện bottom
+        setBottomNavIcons(defaultTab)
+
         binding.bottomNav.setOnItemSelectedListener { item ->
-            val targetFragment = fragmentByItemId[item.itemId] ?: return@setOnItemSelectedListener false
-            if (targetFragment === activeFragment) return@setOnItemSelectedListener true
+
+            val targetFragment =
+                fragmentByItemId[item.itemId]
+                    ?: return@setOnItemSelectedListener false
+
+            if (targetFragment === activeFragment)
+                return@setOnItemSelectedListener true
 
             setBottomNavIcons(item.itemId)
+
             switchFragment(targetFragment)
+
             applyToolbarForFragment(targetFragment)
             updateToolbarScrollBehavior(targetFragment)
+
             true
         }
 
-        applyToolbarForFragment(homeFragment)
-        updateToolbarScrollBehavior(homeFragment)
-        binding.bottomNav.selectedItemId = R.id.nav_home
+        applyToolbarForFragment(defaultFragment)
+        updateToolbarScrollBehavior(defaultFragment)
+
+        binding.bottomNav.selectedItemId = defaultTab
     }
 
     //switch fragment
@@ -296,5 +338,23 @@ class BaseBottomNavActivity : BaseActivity() {
             startActivity(intent)
         }
 
+    }
+    private fun openMessageFragment() {
+
+        if (activeFragment === messageFragment) return
+
+        setBottomNavIcons(R.id.nav_message)
+
+        supportFragmentManager.beginTransaction()
+            .hide(activeFragment)
+            .show(messageFragment)
+            .commit()
+
+        activeFragment = messageFragment
+
+        applyToolbarForFragment(messageFragment)
+        updateToolbarScrollBehavior(messageFragment)
+
+        binding.bottomNav.menu.findItem(R.id.nav_message).isChecked = true
     }
 }

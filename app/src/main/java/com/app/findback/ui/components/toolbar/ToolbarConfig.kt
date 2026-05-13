@@ -8,8 +8,11 @@ data class ToolbarConfig(
     val imageLogoRes: Int? = null,
     val ib1Res: Int? = null,
     val ib2Res: Int? = null,
+    val ib1Badge: Int = 0,
+    val ib2Badge: Int = 0,
     val onIB1: (() -> Unit)? = null,
     val onIB2: (() -> Unit)? = null
+
 )
 
 
