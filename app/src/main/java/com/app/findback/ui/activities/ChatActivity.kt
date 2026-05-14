@@ -88,7 +88,8 @@ class ChatActivity : BaseActivity() {
                 description = data?.getStringExtra("post_desc") ?: ""
             )
             if (post.postId.isNotEmpty()) {
-                viewModel.sendPostMessage(otherUserId, post)
+                pendingPost = post
+                showPostPreview()
                 binding.layoutExtraActions.isVisible = false
             }
         }
@@ -140,18 +141,29 @@ class ChatActivity : BaseActivity() {
                 .apply(RequestOptions().error(R.drawable.ic_post))
                 .into(binding.ivPreviewPostImage)
 
-            binding.btnSendPostPreview.setOnClickListener {
-                viewModel.sendPostMessage(otherUserId, post)
-                hidePostPreview()
+            binding.btnSendPost.setOnClickListener {
+                val intent = Intent(this, PostPickerActivity::class.java).apply {
+                    putExtra("other_user_id", otherUserId)
+                    putExtra("current_user_id", FirebaseAuth.getInstance().currentUser?.uid ?: "")
+                }
+                postPickerLauncher.launch(intent)
             }
 
             binding.btnCancelPostPreview.setOnClickListener {
-                hidePostPreview()
+                hidePostPreviewTemporarily()
+            }
+            binding.btnSendPostPreview.setOnClickListener {
+                viewModel.sendPostMessage(otherUserId, post)
+                clearPostPreview()
             }
         }
     }
 
-    private fun hidePostPreview() {
+    private fun hidePostPreviewTemporarily() {
+        binding.layoutPostPreview.isVisible = false
+    }
+
+    private fun clearPostPreview() {
         binding.layoutPostPreview.isVisible = false
         pendingPost = null
     }
@@ -177,6 +189,7 @@ class ChatActivity : BaseActivity() {
             }
         }
     }
+
     @Suppress("DEPRECATION")
     override fun onBackPressed() {
         if (intent.getBooleanExtra("from_post_detail", false)) {
@@ -191,6 +204,7 @@ class ChatActivity : BaseActivity() {
             super.onBackPressed()
         }
     }
+
     private fun setupRecyclerView() {
         binding.rvMessages.apply {
             layoutManager = LinearLayoutManager(this@ChatActivity).apply { stackFromEnd = true }
@@ -209,7 +223,8 @@ class ChatActivity : BaseActivity() {
 
         binding.btnSendLocation.setOnClickListener {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-                == PackageManager.PERMISSION_GRANTED) {
+                == PackageManager.PERMISSION_GRANTED
+            ) {
                 fetchAndSendLocation()
             } else {
                 locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
@@ -275,7 +290,12 @@ class ChatActivity : BaseActivity() {
         if (mapsIntent.resolveActivity(packageManager) != null) {
             startActivity(mapsIntent)
         } else {
-            startActivity(Intent(Intent.ACTION_VIEW, "https://maps.google.com/?q=$lat,$lng".toUri()))
+            startActivity(
+                Intent(
+                    Intent.ACTION_VIEW,
+                    "https://maps.google.com/?q=$lat,$lng".toUri()
+                )
+            )
         }
     }
 

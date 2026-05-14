@@ -15,7 +15,8 @@ class PostPickerActivity : BaseActivity() {
 
     private lateinit var binding: ActivityPostPickerBinding
     private val postViewModel: PostViewModel by viewModels()
-
+    private val otherUserId by lazy { intent.getStringExtra("other_user_id") ?: "" }
+    private val currentUserId by lazy { intent.getStringExtra("current_user_id") ?: "" }
     private val adapter by lazy {
         PostPickerAdapter { post -> returnPost(post) }
     }
@@ -32,9 +33,12 @@ class PostPickerActivity : BaseActivity() {
             adapter = this@PostPickerActivity.adapter
         }
 
-        // LiveData — observe thay vì collect
+
         postViewModel.postsShared.observe(this) { posts ->
-            adapter.submitList(posts)
+            val filterd = posts.filter { post ->
+                post.userId == otherUserId || post.userId == currentUserId
+            }
+            adapter.submitList(filterd)
         }
     }
 

@@ -6,7 +6,7 @@ import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
-import okhttp3.internal.filterList
+
 
 class FirebasePostDataSource {
     private val database = FirebaseDatabase.getInstance().getReference("posts")

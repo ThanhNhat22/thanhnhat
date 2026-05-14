@@ -16,7 +16,7 @@ class HomeAdapter(private val context: Context, private val list: MutableList<Po
     interface OnItemClickListener {
         fun onItemClick(position: Int)
         fun onItemClickShare(position: Int)
-        fun onItemClickSave(position: Int)
+        fun onItemClickChat(position: Int)
     }
     fun setOnItemClickListener(onItemClickListener: OnItemClickListener) {
         this.onItemClickListener = onItemClickListener
@@ -47,8 +47,8 @@ class HomeAdapter(private val context: Context, private val list: MutableList<Po
         }
         holder.binding.tvTitle.text = post.title
         holder.binding.tvDescription.text = post.description
-
         holder.binding.tvLocation.text = post.locationText
+
     }
 
     override fun getItemCount(): Int {
@@ -75,8 +75,8 @@ class HomeAdapter(private val context: Context, private val list: MutableList<Po
             binding.btnShare.setOnClickListener {
                 onItemClickListener?.onItemClickShare(pos)
             }
-            binding.btnSave.setOnClickListener {
-                onItemClickListener?.onItemClickSave(pos)
+            binding.btnChat.setOnClickListener {
+                onItemClickListener?.onItemClickChat(pos)
             }
         }
     }

@@ -2,23 +2,24 @@
 <com.google.android.material.appbar.AppBarLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:background="@color/white"
-    android:layout_height="wrap_content">
+    android:layout_height="wrap_content"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:background="@color/white">
 
     <com.google.android.material.appbar.MaterialToolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
-        app:layout_scrollFlags="scroll|enterAlways"
         android:layout_height="48dp"
-        android:minHeight="48dp"
         android:background="@color/white"
         android:elevation="0dp"
-        >
+        android:minHeight="48dp"
+        app:layout_scrollFlags="scroll|enterAlways">
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:gravity="center_vertical"
             android:background="@color/white"
+            android:gravity="center_vertical"
             android:orientation="horizontal"
             android:paddingEnd="12dp">
 
@@ -29,82 +30,99 @@
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
 
-            <ImageView
-                android:id="@+id/ivToolbarLogo"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:layout_marginEnd="8dp"
-                android:contentDescription="@null"
-                android:scaleType="fitCenter"
-                android:visibility="gone" />
+                <ImageView
+                    android:id="@+id/ivToolbarLogo"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_marginEnd="8dp"
+                    android:contentDescription="@null"
+                    android:scaleType="fitCenter"
+                    android:visibility="gone" />
 
-            <TextView
-                android:id="@+id/tvToolbarTitle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textSize="24sp"
-                android:textStyle="bold"
-                android:visibility="visible"
-                />
+                <TextView
+                    android:id="@+id/tvToolbarTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="24sp"
+                    android:textStyle="bold"
+                    android:visibility="visible" />
 
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/layoutSearch"
-                android:layout_width="0dp"
-                android:layout_gravity="center"
-                android:gravity="center"
-                android:layout_height="35dp"
-                android:layout_weight="1"
-                app:boxCornerRadiusBottomEnd="8dp"
-                app:boxCornerRadiusBottomStart="8dp"
-                app:boxCornerRadiusTopEnd="8dp"
-                app:boxStrokeColor="@android:color/darker_gray"
-                app:boxCornerRadiusTopStart="8dp"
-                android:layout_marginEnd="12dp"
-                app:hintEnabled="false"
-                android:visibility="gone"
-                >
-
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/etSearch"
-                    android:layout_width="match_parent"
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/layoutSearch"
+                    android:layout_width="0dp"
                     android:layout_height="35dp"
-                    android:gravity="center_vertical"
-                    android:includeFontPadding="false"
-                    android:paddingTop="0dp"
-                    android:inputType="textEmailAddress"
-                    android:paddingBottom="0dp"
-                    android:hint="Tìm kiếm"/>
-            </com.google.android.material.textfield.TextInputLayout>
+                    android:layout_gravity="center"
+                    android:layout_marginEnd="12dp"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:visibility="gone"
+                    app:boxCornerRadiusBottomEnd="8dp"
+                    app:boxCornerRadiusBottomStart="8dp"
+                    app:boxCornerRadiusTopEnd="8dp"
+                    app:boxCornerRadiusTopStart="8dp"
+                    app:boxStrokeColor="@android:color/darker_gray"
+                    app:hintEnabled="false">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etSearch"
+                        android:layout_width="match_parent"
+                        android:layout_height="35dp"
+                        android:gravity="center_vertical"
+                        android:hint="Tìm kiếm"
+                        android:includeFontPadding="false"
+                        android:inputType="textEmailAddress"
+                        android:paddingTop="0dp"
+                        android:paddingBottom="0dp" />
+                </com.google.android.material.textfield.TextInputLayout>
 
             </LinearLayout>
 
             <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            >
-           <ImageButton
-               android:id="@+id/ib1"
-               android:layout_width="wrap_content"
-               android:layout_height="wrap_content"
-
-               android:visibility="gone"
-               android:background="@drawable/ic_button_background"
-               android:scaleType="centerInside"
-               android:layout_marginEnd="6dp"
-               android:padding="4dp"
-               />
-            <ImageButton
-                android:id="@+id/ib2"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:visibility="gone"
-                android:background="@drawable/ic_button_background"
-                android:scaleType="centerInside"
-                android:padding="4dp"
-                />
-        </LinearLayout>
+                android:layout_height="match_parent"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <FrameLayout
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:layout_marginEnd="6dp">
+
+                    <ImageButton
+                        android:id="@+id/ib1"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:background="@drawable/ic_button_background"
+                        android:padding="4dp"
+                        android:scaleType="centerInside"
+                        android:visibility="gone" />
+
+                    <!-- Badge nằm chồng lên icon -->
+                    <TextView
+                        android:id="@+id/tvBadge1"
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:layout_gravity="top|end"
+                        android:layout_marginTop="4dp"
+                        android:layout_marginEnd="4dp"
+                        android:background="@drawable/bg_badge"
+                        android:gravity="center"
+                        android:textColor="@android:color/white"
+                        android:textSize="10sp"
+                        android:textStyle="bold"
+                        android:visibility="gone"
+                        tools:text="3" />
+
+                </FrameLayout>
+                <ImageButton
+                    android:id="@+id/ib2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/ic_button_background"
+                    android:padding="4dp"
+                    android:scaleType="centerInside"
+                    android:visibility="gone" />
+            </LinearLayout>
 
         </LinearLayout>
 

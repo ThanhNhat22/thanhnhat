@@ -5,14 +5,11 @@ import android.os.Bundle
 import androidx.activity.enableEdgeToEdge
 import androidx.lifecycle.lifecycleScope
 import com.app.findback.databinding.ActivityMainBinding
+import com.app.findback.ui.NotificationHelper
 import com.app.findback.ui.activities.BaseBottomNavActivity
+import com.app.findback.ui.activities.ChatActivity
 import com.onesignal.OneSignal
 import kotlinx.coroutines.launch
-import android.util.Log
-import com.onesignal.notifications.INotificationClickListener
-import com.onesignal.notifications.INotificationClickEvent
-import com.app.findback.ui.activities.ChatActivity
-
 
 class MainActivity : BaseActivity() {
 
@@ -24,66 +21,44 @@ class MainActivity : BaseActivity() {
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        OneSignal.initWithContext(
-            this,
-            "bdf5516d-cd73-4dd2-b189-c429f8311bd5"
-        )
-        OneSignal.Notifications.addClickListener(
-            object : INotificationClickListener {
 
-                override fun onClick(event: INotificationClickEvent) {
+        NotificationHelper.createNotificationChannel(this)
 
-                    val data = event.notification.additionalData
+        setupOneSignal()
+        setToolbar()
+        navigateToMainScreen()
+    }
 
-                    val conversationId =
-                        data?.optString("conversationId", "") ?: ""
+    private fun setupOneSignal() {
+        OneSignal.initWithContext(this, "bdf5516d-cd73-4dd2-b189-c429f8311bd5")
 
-                    val otherUserId =
-                        data?.optString("otherUserId", "") ?: ""
+        // Click Listener
+        OneSignal.Notifications.addClickListener(object :
+            com.onesignal.notifications.INotificationClickListener {
 
-                    val otherUserName =
-                        data?.optString("otherUserName", "") ?: ""
+            override fun onClick(event: com.onesignal.notifications.INotificationClickEvent) {
+                val data = event.notification.additionalData ?: return
 
-                    val intent = Intent(
-                        this@MainActivity,
-                        ChatActivity::class.java
-                    )
-
-                    intent.putExtra(
-                        ChatActivity.EXTRA_CONVERSATION_ID,
-                        conversationId
-                    )
-
-                    intent.putExtra(
-                        ChatActivity.EXTRA_OTHER_USER_ID,
-                        otherUserId
-                    )
-
-                    intent.putExtra(
-                        ChatActivity.EXTRA_OTHER_USER_NAME,
-                        otherUserName
-                    )
-
-                    intent.flags =
-                        Intent.FLAG_ACTIVITY_NEW_TASK or
-                                Intent.FLAG_ACTIVITY_CLEAR_TOP
-
-                    startActivity(intent)
+                val intent = Intent(this@MainActivity, ChatActivity::class.java).apply {
+                    putExtra(ChatActivity.EXTRA_CONVERSATION_ID, data.optString("conversationId", ""))
+                    putExtra(ChatActivity.EXTRA_OTHER_USER_ID, data.optString("otherUserId", ""))
+                    putExtra(ChatActivity.EXTRA_OTHER_USER_NAME, data.optString("otherUserName", ""))
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
                 }
+                startActivity(intent)
             }
-        )
+        })
 
+        // Yêu cầu quyền
         lifecycleScope.launch {
             OneSignal.Notifications.requestPermission(true)
         }
-        navigateToMainScreen()
     }
 
     private fun navigateToMainScreen() {
         startActivity(Intent(this, BaseBottomNavActivity::class.java))
         finish()
     }
-
 
     private fun setToolbar() {
         setupToolbarCus(

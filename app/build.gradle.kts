@@ -89,5 +89,7 @@ dependencies {
     implementation("androidx.activity:activity-ktx:1.8.2")
     implementation("com.google.firebase:firebase-messaging")
 
-    implementation("com.onesignal:OneSignal:[5.1.6, 5.1.99]")
+    implementation("com.onesignal:OneSignal:[5.1.6, 5.9.99]")
+
+    implementation("de.hdodenhof:circleimageview:3.1.0")
 }

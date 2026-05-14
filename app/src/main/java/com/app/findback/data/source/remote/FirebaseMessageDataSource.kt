@@ -11,6 +11,8 @@ import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaType
 import org.json.JSONArray
 import org.json.JSONObject
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 class FirebaseMessageDataSource {
     private val client = OkHttpClient()
@@ -319,88 +321,73 @@ class FirebaseMessageDataSource {
 
     private suspend fun sendPushNotification(message: Message) {
         try {
-            val receiverSnapshot = db
-                .child("users")
-                .child(message.receiverId)
-                .get()
-                .await()
+            val receiverSnapshot = db.child("users").child(message.receiverId).get().await()
+            val playerId = receiverSnapshot.child("playerId").getValue(String::class.java) ?: return
+            val senderName = receiverSnapshot.child("fullName").getValue(String::class.java) ?: "Người dùng"
 
-            val playerId =
-                receiverSnapshot
-                    .child("playerId")
-                    .getValue(String::class.java)
-                    ?: return
 
-            val senderName =
-                receiverSnapshot
-                    .child("fullName")
-                    .getValue(String::class.java)
-                    ?: "Tin nhắn mới"
+            val senderSnapshot = db.child("users").child(message.senderId).get().await()
+            val senderAvatar = senderSnapshot.child("avatar").getValue(String::class.java) ?: ""
+            val senderDisplayName = senderSnapshot.child("fullName").getValue(String::class.java) ?: "Người dùng"
 
-            val json = JSONObject()
+            val bodyText = when (message.type) {
+                MessageType.POST -> "Đã gửi bài đăng: ${message.post?.title ?: ""}"
+                MessageType.LOCATION -> "Đã gửi vị trí"
+                else -> message.content.take(120)
+            }
 
-            json.put(
-                "app_id",
-                "bdf5516d-cd73-4dd2-b189-c429f8311bd5"
-            )
-
-            json.put(
-                "include_player_ids",
-                JSONArray().put(playerId)
-            )
-
-            json.put(
-                "headings",
-                JSONObject().put("en", senderName)
-            )
-
-            json.put(
-                "contents",
-                JSONObject().put("en", message.content)
-            )
-
-            json.put(
-                "priority",
-                10
-            )
-
-            json.put(
-                "data",
-                JSONObject().apply {
-
-                    put(
-                        "conversationId",
-                        message.conversationId
-                    )
-
-                    put(
-                        "otherUserId",
-                        message.senderId
-                    )
-
-                    put(
-                        "otherUserName",
-                        senderName
-                    )
-                }
-            )
-
-            val body = RequestBody.create(
-                "application/json; charset=utf-8".toMediaType(),
-                json.toString()
-            )
-
-            val request = Request.Builder()
-                .url("https://onesignal.com/api/v1/notifications")
-                .post(body)
-                .addHeader(
-                    "Authorization",
-                    "Basic os_v2_app_xx2vc3onong5fmmjyqu7qmi32xxykobdgffu6unjih23btge7fr7fxojprnciimgbuwhyfis22rlywphpl7icgnxredk3mwd4e56yzi"
+            saveNotification(
+                Notification(
+                    userId = message.receiverId,
+                    type = "message",
+                    title = senderDisplayName,
+                    content = bodyText,
+                    senderId = message.senderId,
+                    senderName = senderDisplayName,
+                    senderAvatar = senderAvatar,
+                    conversationId = message.conversationId
                 )
-                .build()
+            )
 
-            client.newCall(request).execute()
+            val json = JSONObject().apply {
+                put("app_id", "bdf5516d-cd73-4dd2-b189-c429f8311bd5")
+                put("include_player_ids", JSONArray().put(playerId))
+                put("headings", JSONObject().put("en", senderDisplayName))
+                put("contents", JSONObject().put("en", bodyText))
+                put("priority", 10)
+                put("small_icon", "ic_notification")
+                put("data", JSONObject().apply {
+                    put("conversationId", message.conversationId)
+                    put("otherUserId", message.senderId)
+                    put("otherUserName", senderDisplayName)
+                    put("type", "chat_message")
+                })
+            }
 
+            withContext(Dispatchers.IO) {
+                val body = RequestBody.create(
+                    "application/json; charset=utf-8".toMediaType(), json.toString()
+                )
+                val request = Request.Builder()
+                    .url("https://onesignal.com/api/v1/notifications")
+                    .post(body)
+                    .addHeader("Authorization", "Basic os_v2_app_xx2vc3onong5fmmjyqu7qmi32xxykobdgffu6unjih23btge7fr7fxojprnciimgbuwhyfis22rlywphpl7icgnxredk3mwd4e56yzi")
+                    .build()
+                val response = client.newCall(request).execute()
+                android.util.Log.d("OneSignal", "Push response: ${response.code}")
+            }
+
+        } catch (e: Exception) {
+            android.util.Log.e("OneSignal", "Push failed", e)
+        }
+    }
+
+    private suspend fun saveNotification(notification: Notification) {
+        try {
+            val ref = db.child("notifications").child(notification.userId)
+            val notiId = ref.push().key ?: return
+            val finalNoti = notification.copy(id = notiId)
+            ref.child(notiId).setValue(finalNoti.toMap()).await()
         } catch (e: Exception) {
             e.printStackTrace()
         }

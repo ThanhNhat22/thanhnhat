@@ -23,8 +23,23 @@ open class BaseActivity : AppCompatActivity() {
         //bật edge-to-edge
         WindowCompat.setDecorFitsSystemWindows(window, false)
     }
+
     //Cấu hình toolbar ko che statusBar
-    public fun setupToolbarCus(toolbar: Toolbar, title: String? = null, isShowSearch: Boolean=false, backgroudResId: Int? = null, isBack: Boolean = false, imageLogo:Int?=null, ib1:Int?=null, ib2:Int?=null, onBack: (() -> Unit)? = null, onIB1: (() -> Unit)? = null, onIB2: (() -> Unit)? = null) {
+    public fun setupToolbarCus(
+        toolbar: Toolbar,
+        title: String? = null,
+        isShowSearch: Boolean = false,
+        backgroudResId: Int? = null,
+        isBack: Boolean = false,
+        imageLogo: Int? = null,
+        ib1: Int? = null,
+        ib2: Int? = null,
+        ib1Badge: Int = 0,
+        ib2Badge: Int = 0,
+        onBack: (() -> Unit)? = null,
+        onIB1: (() -> Unit)? = null,
+        onIB2: (() -> Unit)? = null
+    ) {
         setSupportActionBar(toolbar)
 
         //set title và back
@@ -41,9 +56,9 @@ open class BaseActivity : AppCompatActivity() {
         val imageButton1 = toolbar.findViewById<ImageButton>(R.id.ib1)
         val imageButton2 = toolbar.findViewById<ImageButton>(R.id.ib2)
         val layoutSearch = toolbar.findViewById<View>(R.id.layoutSearch)
+        val badge1 = toolbar.findViewById<TextView>(R.id.tvBadge1)
 
-
-        if (isShowSearch){
+        if (isShowSearch) {
             titleView.visibility = View.GONE
             layoutSearch.visibility = View.VISIBLE
             logoView.visibility = View.GONE
@@ -62,27 +77,34 @@ open class BaseActivity : AppCompatActivity() {
 
 
         //set imagelogo
-        if(imageLogo!=null){
+        if (imageLogo != null) {
             logoView.setImageResource(imageLogo)
             logoView.visibility = View.VISIBLE
         } else {
             logoView.visibility = View.GONE
         }
         //set ib1
-        if(ib1!=null){
+        if (ib1 != null) {
             imageButton1.setImageResource(ib1)
             imageButton1.visibility = View.VISIBLE
+            if (badge1 != null) {
+                if (ib1Badge > 0) {
+                    badge1.visibility = View.VISIBLE
+                    badge1.text = if (ib1Badge > 99) "99+" else ib1Badge.toString()
+                } else {
+                    badge1.visibility = View.GONE
+                }
+            }
         } else {
             imageButton1.visibility = View.GONE
         }
         //set ib2
-        if(ib2!=null){
+        if (ib2 != null) {
             imageButton2.setImageResource(ib2)
             imageButton2.visibility = View.VISIBLE
         } else {
             imageButton2.visibility = View.GONE
         }
-
 
 
         //back
@@ -112,6 +134,7 @@ open class BaseActivity : AppCompatActivity() {
             insets
         }
     }
+
     //cấu hình responsive cho bottom nav
     fun setupBottomNavInsertCus(bottomNav: BottomNavigationView) {
 
@@ -126,10 +149,10 @@ open class BaseActivity : AppCompatActivity() {
 
             // clamp để không bị quá cao
             val safeInset = when {
-            inset > 24.dpToPx() -> 16.dpToPx()
-            inset > 0 -> inset / 2
-            else -> 0
-        }
+                inset > 24.dpToPx() -> 16.dpToPx()
+                inset > 0 -> inset / 2
+                else -> 0
+            }
 
             view.setPadding(
                 initialPaddingStart,
@@ -143,13 +166,17 @@ open class BaseActivity : AppCompatActivity() {
 
         ViewCompat.requestApplyInsets(bottomNav)
     }
-    fun setKeybroad(){
+
+    fun setKeybroad() {
         WindowCompat.setDecorFitsSystemWindows(window, true)
-        window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE or
-                WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN)
+        window.setSoftInputMode(
+            WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE or
+                    WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN
+        )
     }
+
     //Cấu hình mode light cho toàn app
-    fun setMode(){
+    fun setMode() {
         AppCompatDelegate.setDefaultNightMode(
             AppCompatDelegate.MODE_NIGHT_NO
         )

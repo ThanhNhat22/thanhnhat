@@ -6,7 +6,9 @@ import android.content.res.ColorStateList
 import android.os.Bundle
 import android.util.Log
 import android.view.MotionEvent
+import android.view.View
 import android.view.ViewConfiguration
+import androidx.activity.OnBackPressedCallback
 import android.widget.EditText
 import androidx.activity.enableEdgeToEdge
 import androidx.core.content.ContextCompat
@@ -23,6 +25,7 @@ import com.app.findback.ui.fragments.MessageFragment
 import com.app.findback.ui.fragments.ProfileFragment
 import com.app.findback.ui.components.toolbar.ToolbarConfig
 import com.app.findback.ui.components.toolbar.ToolbarConfigProvider
+import com.app.findback.ui.fragments.NotificationsFragment
 import com.app.findback.ui.viewmodel.CircleZoneViewModel
 import com.app.findback.ui.viewmodel.PostViewModel
 import kotlin.math.abs
@@ -50,15 +53,36 @@ class BaseBottomNavActivity : BaseActivity() {
         enableEdgeToEdge()
         setControl()
         setContentView(binding.root)
+
         setupDraggableAiChat()
         setBottomNav()
+
         if (intent.getBooleanExtra("open_message_tab", false)) {
             openMessageFragment()
         }
+
         setBottomNavInsert()
         handleIntent(intent)
         getPosts()
+
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                if (supportFragmentManager.backStackEntryCount > 0) {
+                    val isNotificationFragment = supportFragmentManager.findFragmentByTag("notifications") != null
+
+                    supportFragmentManager.popBackStack()
+
+                    if (isNotificationFragment) {
+                        binding.bottomNav.visibility = View.VISIBLE
+                        refreshToolbarForActiveFragment()
+                    }
+                    return
+                }
+                finish()
+            }
+        })
     }
+
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
@@ -200,6 +224,8 @@ class BaseBottomNavActivity : BaseActivity() {
             imageLogo = config.imageLogoRes,
             ib1 = config.ib1Res,
             ib2 = config.ib2Res,
+            ib1Badge = config.ib1Badge,
+            ib2Badge = config.ib2Badge,
             onIB1 = config.onIB1,
             onIB2 = config.onIB2
         )
@@ -356,5 +382,20 @@ class BaseBottomNavActivity : BaseActivity() {
         updateToolbarScrollBehavior(messageFragment)
 
         binding.bottomNav.menu.findItem(R.id.nav_message).isChecked = true
+    }
+    fun openNotificationsFragment() {
+        val notificationsFragment = NotificationsFragment()
+
+        binding.bottomNav.visibility = View.GONE
+
+        supportFragmentManager.beginTransaction()
+            .hide(activeFragment)
+            .replace(R.id.fragmentContainer, notificationsFragment, "notifications")
+            .addToBackStack("notifications")
+            .commitAllowingStateLoss()
+
+        binding.bottomNav.postDelayed({
+            applyToolbarForFragment(notificationsFragment)
+        }, 150)
     }
 }
