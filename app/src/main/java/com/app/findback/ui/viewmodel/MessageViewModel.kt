@@ -23,7 +23,7 @@ class MessageViewModel(
     private val repository: MessageRepository
 ) : ViewModel() {
 
-    // Lay truc tiep moi lan goi — tranh cache uid rong
+
     private val currentUserId: String
         get() {
             val uid = FirebaseAuth.getInstance().currentUser?.uid ?: ""

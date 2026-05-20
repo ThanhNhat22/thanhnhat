@@ -15,6 +15,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 class ConversationAdapter(
+    private val currentUserId : String,
     private val onClick: (Conversation) -> Unit
 ) : ListAdapter<Conversation, ConversationAdapter.VH>(DIFF) {
 
@@ -22,11 +23,12 @@ class ConversationAdapter(
         RecyclerView.ViewHolder(b.root) {
 
         fun bind(item: Conversation) {
+            val otherName = item.getOtherUserName(currentUserId)
+            val otherAvatar = item.getOtherUserAvatar(currentUserId)
             // Hiển thị tên người dùng
-            b.tvName.text = when {
-                item.otherUserName.isNotBlank() && item.otherUserName.length < 30 -> item.otherUserName
-                else -> "Người dùng"
-            }
+            b.tvName.text = if ( otherName.isNotBlank() &&  otherName.length < 30)
+                otherName  else "Người dùng"
+
 
             // Last message
             b.tvLastMessage.text = when (item.lastMessageType) {
@@ -48,7 +50,7 @@ class ConversationAdapter(
 
             // Avatar
             Glide.with(b.ivAvatar.context)
-                .load(item.otherUserAvatar.ifEmpty { null })
+                .load(otherAvatar.ifEmpty { null })
                 .apply(
                     RequestOptions.circleCropTransform()
                         .placeholder(R.drawable.ic_default_avatar)

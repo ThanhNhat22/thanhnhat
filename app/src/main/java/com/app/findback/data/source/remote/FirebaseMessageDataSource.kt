@@ -106,16 +106,18 @@ class FirebaseMessageDataSource {
             else -> message.content
         }
 
-
-        val otherId = if (message.senderId == user1) user2 else user1
-        val userInfo = getUserInfo(otherId)
+        //lay thong tin cua 2 user
+        val user1Info = getUserInfo(user1)
+        val user2Info = getUserInfo(user2)
 
         val updates = mapOf<String, Any?>(
             "conversationId" to convId,
             "user1Id" to user1,
             "user2Id" to user2,
-            "otherUserName" to userInfo.fullName,
-            "otherUserAvatar" to userInfo.avatar,
+            "user1Name" to user1Info.fullName,
+            "user2Name" to user2Info.fullName,
+            "user1Avatar" to user1Info.avatar,
+            "user2Avatar" to user2Info.avatar,
             "lastMessage" to lastMsgText,
             "lastMessageType" to message.type.name,
             "lastMessageTime" to message.timestamp,
@@ -195,17 +197,19 @@ class FirebaseMessageDataSource {
             val otherId = if (u1 == currentUserId) u2 else u1
 
 
-            val otherName = when {
-                (map["otherUserName"] as? String)?.isNotBlank() == true -> map["otherUserName"] as String
-                else -> "Người dùng"
-            }
+            val user1Name = map["user1Name"] as? String ?: "Người dùng"
+            val user2Name = map["user2Name"] as? String ?: "Người dùng"
+            val user1Avatar = map["user1Avatar"] as? String ?: ""
+            val user2Avatar = map["user2Avatar"] as? String ?: ""
 
             Conversation(
                 conversationId = convId,
                 user1Id = u1,
                 user2Id = u2,
-                otherUserName = otherName,
-                otherUserAvatar = map["otherUserAvatar"] as? String ?: "",
+                user1Name = user1Name,
+                user2Name = user2Name,
+                user1Avatar = user1Avatar,
+                user2Avatar = user2Avatar,
                 lastMessage = map["lastMessage"] as? String ?: "",
                 lastMessageType = MessageType.valueOf(
                     map["lastMessageType"] as? String ?: "TEXT"
@@ -371,7 +375,8 @@ class FirebaseMessageDataSource {
                 val request = Request.Builder()
                     .url("https://onesignal.com/api/v1/notifications")
                     .post(body)
-                    .addHeader("Authorization", "Basic os_v2_app_xx2vc3onong5fmmjyqu7qmi32xxykobdgffu6unjih23btge7fr7fxojprnciimgbuwhyfis22rlywphpl7icgnxredk3mwd4e56yzi")
+                    .addHeader("Authorization", "Key os_v2_app_xx2vc3onong5fmmjyqu7qmi32vzte2tkyw4ufwuf6jk3w6nf4fbtozf4zz53tnymvgwb4eh6qwlpkalmi42umkxuw4zzb4haq6yzr4i")  // ← Sửa ở đây
+                    .addHeader("Content-Type", "application/json; charset=utf-8")
                     .build()
                 val response = client.newCall(request).execute()
                 android.util.Log.d("OneSignal", "Push response: ${response.code}")

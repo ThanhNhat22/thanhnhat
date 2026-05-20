@@ -5,121 +5,99 @@ import android.os.Bundle
 import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.app.findback.RegisterActivity
 import com.app.findback.databinding.ActivityLoginBinding
 import com.app.findback.ui.activities.BaseBottomNavActivity
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
 import com.onesignal.OneSignal
-
+import com.onesignal.notifications.INotificationClickEvent
+import kotlinx.coroutines.*
 
 class LoginActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityLoginBinding
-
-    // Firebase Auth
     private lateinit var auth: FirebaseAuth
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         binding = ActivityLoginBinding.inflate(layoutInflater)
         setContentView(binding.root)
-
-        // Khởi tạo Firebase Auth
         auth = FirebaseAuth.getInstance()
-
         setupListeners()
     }
 
     private fun setupListeners() {
-
-        // Nút đăng nhập
-        binding.btnLogin.setOnClickListener {
-            login()
-        }
-
-        // Chuyển sang màn hình đăng ký
+        binding.btnLogin.setOnClickListener { login() }
         binding.tvRegister.setOnClickListener {
             startActivity(Intent(this, RegisterActivity::class.java))
         }
-
-        // Quên mật khẩu
-        binding.tvForgotPassword.setOnClickListener {
-
-           /* startActivity(
-                Intent(this, ForgotPasswordActivity::class.java)
-            )*/
-        }
+        binding.tvForgotPassword.setOnClickListener { }
     }
 
     private fun login() {
-
         val email = binding.etEmail.text.toString().trim()
         val password = binding.etPassword.text.toString().trim()
 
-        // Validation
-        if (email.isEmpty()) {
-            binding.etEmail.error = "Vui lòng nhập email"
-            return
-        }
-
-        if (password.isEmpty()) {
-            binding.etPassword.error = "Vui lòng nhập mật khẩu"
-            return
-        }
-
-        if (password.length < 6) {
-            binding.etPassword.error = "Mật khẩu tối thiểu 6 ký tự"
-            return
-        }
+        if (email.isEmpty()) { binding.etEmail.error = "Vui long nhap email"; return }
+        if (password.isEmpty()) { binding.etPassword.error = "Vui long nhap mat khau"; return }
+        if (password.length < 6) { binding.etPassword.error = "Mat khau toi thieu 6 ky tu"; return }
 
         showLoading(true)
 
-        // Đăng nhập Firebase
         auth.signInWithEmailAndPassword(email, password)
             .addOnCompleteListener { task ->
-
                 showLoading(false)
 
                 if (task.isSuccessful) {
                     val uid = auth.currentUser?.uid ?: return@addOnCompleteListener
 
-                    val playerId = OneSignal.User.pushSubscription.id ?: ""
+                    // Luu playerId sau khi login thanh cong
+                    savePlayerIdToFirebase(uid)
 
-                    FirebaseDatabase.getInstance()
-                        .getReference("users")
-                        .child(uid)
-                        .child("playerId")
-                        .setValue(playerId)
-                    Toast.makeText(
-                        this,
-                        "Đăng nhập thành công",
-                        Toast.LENGTH_SHORT
-                    ).show()
-
-                    startActivity(
-                        Intent(this, BaseBottomNavActivity::class.java)
-                    )
-
+                    Toast.makeText(this, "Dang nhap thanh cong", Toast.LENGTH_SHORT).show()
+                    startActivity(Intent(this, BaseBottomNavActivity::class.java))
                     finish()
-
                 } else {
-
                     Toast.makeText(
                         this,
-                        task.exception?.message ?: "Đăng nhập thất bại",
+                        task.exception?.message ?: "Dang nhap that bai",
                         Toast.LENGTH_LONG
                     ).show()
                 }
             }
     }
 
+    private fun savePlayerIdToFirebase(uid: String) {
+        val userRef = FirebaseDatabase.getInstance()
+            .getReference("users")
+            .child(uid)
+            .child("playerId")
+
+
+        val currentId = OneSignal.User.pushSubscription.id
+        if (!currentId.isNullOrEmpty()) {
+            userRef.setValue(currentId)
+            android.util.Log.d("OneSignal", "Saved playerId immediately: $currentId")
+            return
+        }
+
+
+        CoroutineScope(Dispatchers.IO).launch {
+            repeat(10) { attempt ->
+                delay(500)
+                val id = OneSignal.User.pushSubscription.id
+                if (!id.isNullOrEmpty()) {
+                    userRef.setValue(id)
+                    android.util.Log.d("OneSignal", "Saved playerId after ${(attempt+1)*500}ms: $id")
+                    return@launch
+                }
+            }
+            android.util.Log.e("OneSignal", "Could not get playerId after 5s")
+        }
+    }
+
     private fun showLoading(isLoading: Boolean) {
-
-        binding.progressBar.visibility =
-            if (isLoading) View.VISIBLE else View.GONE
-
+        binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
         binding.btnLogin.isEnabled = !isLoading
     }
 }

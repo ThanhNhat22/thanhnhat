@@ -40,7 +40,7 @@ class NotificationsFragment : Fragment(), ToolbarConfigProvider {
         adapter = NotificationAdapter { notification ->
             viewModel.markAsRead(notification.id)
 
-            // Điều hướng theo loại thông báo
+
             when (notification.type) {
                 "message" -> {
                     val intent = Intent(requireContext(), ChatActivity::class.java).apply {
@@ -50,7 +50,7 @@ class NotificationsFragment : Fragment(), ToolbarConfigProvider {
                     }
                     startActivity(intent)
                 }
-                // Thêm case khác ở đây nếu cần (post, system...)
+
             }
         }
 

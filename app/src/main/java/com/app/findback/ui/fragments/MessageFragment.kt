@@ -40,7 +40,7 @@ class MessageFragment : Fragment(), ToolbarConfigProvider {
     }
 
     private val adapter by lazy {
-        ConversationAdapter { conversation -> openChat(conversation) }
+        ConversationAdapter (currentUserId) { conversation -> openChat(conversation) }
     }
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -101,12 +101,11 @@ class MessageFragment : Fragment(), ToolbarConfigProvider {
 
     // Mo chat tu danh sach conversation
     private fun openChat(conversation: Conversation) {
-        val otherUserId = if (conversation.user1Id == currentUserId)
-            conversation.user2Id else conversation.user1Id
+        val otherUserId = conversation.getOtherUserId(currentUserId)
         startChatWith(
             otherUserId = otherUserId,
-            otherUserName = conversation.otherUserName,
-            otherUserAvatar = conversation.otherUserAvatar
+            otherUserName = conversation.getOtherUserName(currentUserId),
+            otherUserAvatar = conversation.getOtherUserAvatar(currentUserId)
         )
     }
 
@@ -121,13 +120,9 @@ class MessageFragment : Fragment(), ToolbarConfigProvider {
         _binding = null
     }
 
-    companion object {
-        // Dung startChatWith() extension ben duoi de mo chat tu bat ky Fragment nao
-    }
 }
 
-// Extension function - goi nhu the nay o bat ky Fragment nao:
-// requireActivity().startChatWith(post.userId.toString(), post.title)
+
 fun Fragment.startChatWith(
     otherUserId: String,
     otherUserName: String,
