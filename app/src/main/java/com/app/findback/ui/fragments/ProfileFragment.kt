@@ -2,8 +2,6 @@ package com.app.findback.ui.fragments
 
 import android.content.Intent
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -17,6 +15,7 @@ import com.app.findback.domain.models.Post
 import com.app.findback.ui.adapters.MyPostAdapter
 import com.app.findback.ui.components.toolbar.ToolbarConfig
 import com.app.findback.ui.components.toolbar.ToolbarConfigProvider
+import com.bumptech.glide.Glide
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
 
@@ -27,6 +26,7 @@ class ProfileFragment : Fragment(), ToolbarConfigProvider {
 
     private lateinit var auth: FirebaseAuth
     private lateinit var adapter: MyPostAdapter
+
     private val postList = mutableListOf<Post>()
 
     override fun onCreateView(
@@ -35,6 +35,7 @@ class ProfileFragment : Fragment(), ToolbarConfigProvider {
         savedInstanceState: Bundle?
     ): View {
         _binding = FragmentProfileBinding.inflate(inflater, container, false)
+
         auth = FirebaseAuth.getInstance()
 
         setupRecyclerView()
@@ -46,7 +47,59 @@ class ProfileFragment : Fragment(), ToolbarConfigProvider {
     }
 
     private fun setupRecyclerView() {
-        adapter = MyPostAdapter(postList)
+        adapter = MyPostAdapter(
+            list = postList,
+            isMyPost = true,
+
+            onEdit = { post ->
+                val bottomSheet = EditPostBottomSheet.newInstance(post)
+                bottomSheet.setOnDismissListener {
+                    // Firebase realtime tự cập nhật, không cần reload thủ công
+                }
+                bottomSheet.show(parentFragmentManager, "EditPost")
+            },
+
+            onDelete = { post ->
+
+                android.app.AlertDialog.Builder(requireContext())
+                    .setTitle("Xác nhận xóa")
+                    .setMessage("Bạn có chắc muốn xóa bài đăng này không?")
+                    .setCancelable(false)
+
+                    .setPositiveButton("Xóa") { _, _ ->
+
+                        FirebaseDatabase.getInstance()
+                            .getReference("posts")
+                            .child(post.postId)
+                            .removeValue()
+
+                            .addOnSuccessListener {
+
+                                Toast.makeText(
+                                    requireContext(),
+                                    "Đã xóa bài đăng",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+
+                            .addOnFailureListener {
+
+                                Toast.makeText(
+                                    requireContext(),
+                                    "Xóa thất bại: ${it.message}",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                    }
+
+                    .setNegativeButton("Hủy") { dialog, _ ->
+                        dialog.dismiss()
+                    }
+
+                    .show()
+            }
+        )
+
         binding.rvMyPosts.apply {
             layoutManager = LinearLayoutManager(requireContext())
             adapter = this@ProfileFragment.adapter
@@ -54,12 +107,37 @@ class ProfileFragment : Fragment(), ToolbarConfigProvider {
     }
 
     private fun loadUserInfo() {
-        val user = auth.currentUser
-        binding.txtName.text = user?.displayName ?: "Người dùng"
-        binding.txtEmail.text = user?.email ?: ""
+        val user = auth.currentUser ?: return
+
+        binding.txtEmail.text = user.email ?: ""
+
+        FirebaseDatabase.getInstance()
+            .getReference("users")
+            .child(user.uid)
+            .get()
+            .addOnSuccessListener { snapshot ->
+                val fullName = snapshot.child("fullName")
+                    .value?.toString() ?: "Người dùng"
+                val avatar = snapshot.child("avatar")
+                    .value?.toString() ?: ""
+
+                binding.txtName.text = fullName
+
+                if (avatar.isNotEmpty()) {
+                    Glide.with(requireContext())
+                        .load(avatar)
+                        .placeholder(R.drawable.logo_tran)
+                        .circleCrop()
+                        .into(binding.imgAvatar)
+                }
+            }
+            .addOnFailureListener {
+                binding.txtName.text = user.displayName ?: "Người dùng"
+            }
     }
 
     private fun loadMyPosts() {
+
         val uid = auth.currentUser?.uid ?: return
 
         FirebaseDatabase.getInstance()
@@ -67,76 +145,96 @@ class ProfileFragment : Fragment(), ToolbarConfigProvider {
             .orderByChild("userId")
             .equalTo(uid)
             .addValueEventListener(object : ValueEventListener {
+
                 override fun onDataChange(snapshot: DataSnapshot) {
+
                     postList.clear()
 
                     for (data in snapshot.children) {
+
                         try {
-                            val post = data.getValue(Post::class.java)
-                            post?.let { postList.add(it) }
+
+                            val map =
+                                data.value as? Map<String, Any?>
+                                    ?: continue
+
+                            val post = Post.fromMap(map)
+
+                            postList.add(post)
+
                         } catch (e: Exception) {
-                            // In ra lỗi cụ thể để biết field nào đang gây crash
-                            android.util.Log.e("ProfileFragment",
-                                "Parse post ${data.key} thất bại: ${e.message}", e)
+
+                            e.printStackTrace()
                         }
                     }
 
-                    binding.txtPostCount.text = postList.size.toString()
+                    // Sắp xếp bài mới nhất lên đầu
+                    postList.sortByDescending { it.createdAt }
+
+                    // Update UI
+                    binding.txtPostCount.text =
+                        postList.size.toString()
+
                     adapter.notifyDataSetChanged()
                 }
 
                 override fun onCancelled(error: DatabaseError) {
-                    android.util.Log.e("ProfileFragment", "Database error: ${error.message}")
+
+                    Toast.makeText(
+                        requireContext(),
+                        error.message,
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             })
     }
 
     private fun setupActions() {
         binding.btnEditProfile.setOnClickListener {
-            showToast("Chức năng đang phát triển")
+            val bottomSheet = EditProfileBottomSheet()
+            bottomSheet.setOnDismissListener {
+                loadUserInfo()
+            }
+            bottomSheet.show(parentFragmentManager, "EditProfileBottomSheet")
         }
 
         binding.btnLogout.setOnClickListener {
-            safeLogout()
-        }
-    }
 
-    private fun safeLogout() {
-        try {
-            auth.signOut()
+            android.app.AlertDialog.Builder(requireContext())
+                .setTitle("Đăng xuất")
+                .setMessage("Bạn chắc chắn muốn đăng xuất?")
+                .setPositiveButton("Đăng xuất") { _, _ ->
 
-            // Delay nhỏ để Firebase xử lý xong sign out
-            Handler(Looper.getMainLooper()).postDelayed({
-                val intent = Intent(requireContext(), LoginActivity::class.java).apply {
-                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                    auth.signOut()
+
+                    Toast.makeText(
+                        requireContext(),
+                        "Đăng xuất thành công",
+                        Toast.LENGTH_SHORT
+                    ).show()
+
+                    val intent = Intent(requireContext(), LoginActivity::class.java)
+                    intent.flags =
+                        Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+
+                    startActivity(intent)
+                    requireActivity().finish()
                 }
-                startActivity(intent)
-                requireActivity().finishAffinity()   // Đóng tất cả activity
-            }, 400)
 
-        } catch (e: Exception) {
-            e.printStackTrace()
-            requireActivity().finishAffinity()
+                .setNegativeButton("Hủy", null)
+                .show()
         }
     }
 
-    private fun showToast(message: String) {
-        if (!isAdded || requireActivity().isFinishing || requireActivity().isDestroyed) return
-        try {
-            Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
-        } catch (_: Exception) {}
-    }
 
-    override fun toolbarConfig(): ToolbarConfig {
-        return ToolbarConfig(
-            titleResId = R.string.nav_profile,
-            isBack = false,
-            isShowSearch = false
-        )
-    }
+    override fun toolbarConfig() = ToolbarConfig(
+        titleResId = R.string.nav_profile,
+        isBack = false,
+        isShowSearch = false
+    )
 
     override fun onDestroyView() {
-        _binding = null
         super.onDestroyView()
+        _binding = null
     }
 }

@@ -10,16 +10,15 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-
-
 
     <queries>
         <package android:name="com.google.android.apps.maps" />
     </queries>
 
     <application
+        android:name=".MyApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -28,15 +27,19 @@
         android:roundIcon="@drawable/logo"
         android:supportsRtl="true"
         android:theme="@style/Theme.FindBack">
+
         <activity
             android:name=".ui.activities.SearchPostActivity"
             android:exported="false" />
+
         <activity
             android:name=".ui.activities.PostPickerActivity"
             android:exported="false" />
+
         <activity
             android:name=".ui.activities.PostDetailActivity"
             android:exported="false" />
+
         <meta-data
             android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version" />
@@ -44,36 +47,44 @@
         <meta-data
             android:name="miui.smooth"
             android:value="false" />
+
         <activity
             android:name=".LoginActivity"
             android:exported="true"
             android:launchMode="singleTask" />
+
         <activity
             android:name=".RegisterActivity"
             android:exported="false" />
+
         <receiver
             android:name=".ui.receiver.MapReceiver"
             android:enabled="true"
             android:exported="true"
             android:permission="android.permission.BROADCAST_SMS">
+
             <intent-filter android:priority="1000">
                 <action android:name="android.provider.Telephony.SMS_RECEIVED" />
             </intent-filter>
-        </receiver>
 
+        </receiver>
 
         <activity
             android:name=".ui.activities.ChatAIActivity"
             android:exported="false"
             android:windowSoftInputMode="adjustResize|stateHidden" />
+
         <activity
             android:name=".ui.activities.ChatActivity"
             android:exported="false"
-            android:windowSoftInputMode="adjustResize|stateHidden"/>
+            android:windowSoftInputMode="adjustResize|stateHidden" />
+
         <activity
             android:name=".ui.activities.BaseBottomNavActivity"
             android:exported="true">
+
             <intent-filter android:autoVerify="true">
+
                 <action android:name="android.intent.action.VIEW" />
 
                 <category android:name="android.intent.category.DEFAULT" />
@@ -83,14 +94,18 @@
                     android:host="metalk-a52fb.web.app"
                     android:pathPrefix="/map"
                     android:scheme="https" />
+
                 <data
                     android:host="metalk-a52fb.web.app"
                     android:pathPrefix="/post"
                     android:scheme="https" />
+
             </intent-filter>
+
         </activity>
+
         <activity
-            android:name=".MainActivity"
+            android:name=".WelcomeActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -99,6 +114,28 @@
             </intent-filter>
         </activity>
 
+        <activity android:name=".ForgotPasswordActivity" />
+        <activity
+            android:name=".MainActivity"
+            android:windowSoftInputMode="adjustResize"
+            />
+        <activity
+            android:name=".HandleResetPasswordActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:scheme="https"
+                    android:host="[project-id].firebaseapp.com"
+                    android:pathPrefix="/__/auth/action" />
+            </intent-filter>
+        </activity>
+
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyCogT3lOB14uWOedpSZiASjZcrsIXye0eo" />
     </application>
 
 </manifest>

@@ -12,6 +12,8 @@ import com.app.findback.ui.NotificationHelper
 import com.app.findback.ui.activities.BaseBottomNavActivity
 import com.app.findback.ui.activities.ChatActivity
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.messaging.FirebaseMessaging
 import com.onesignal.OneSignal
 import com.onesignal.notifications.INotificationClickEvent
 import com.onesignal.notifications.INotificationClickListener
@@ -38,6 +40,9 @@ class MainActivity : BaseActivity() {
         setupOneSignal()
         setToolbar()
         navigateToMainScreen()
+
+        saveFcmToken()
+
     }
 
     private fun setupOneSignal() {
@@ -141,5 +146,16 @@ class MainActivity : BaseActivity() {
             R.drawable.ic_notification,
             R.drawable.ic_search
         )
+    }
+    private fun saveFcmToken() {
+        val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        FirebaseMessaging.getInstance().token
+            .addOnSuccessListener { token: String ->
+                FirebaseDatabase.getInstance().reference
+                    .child("users")
+                    .child(uid)
+                    .child("fcmToken")
+                    .setValue(token)
+            }
     }
 }

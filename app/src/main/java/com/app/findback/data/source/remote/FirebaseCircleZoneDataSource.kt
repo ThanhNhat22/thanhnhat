@@ -12,7 +12,7 @@ class FirebaseCircleZoneDataSource {
 
     //create circle zone
     fun createCircleZone(onSuccess: (Boolean) -> Unit, circleZone: CircleZone,userId:String) {
-       if(circleZone.id == null) return
+        if(circleZone.id == null) return
         database.child(userId).child(circleZone.id).setValue(circleZone.toMap())
             .addOnSuccessListener {
                 onSuccess(true)
@@ -49,6 +49,25 @@ class FirebaseCircleZoneDataSource {
             override fun onCancelled(p0: DatabaseError) {}
         }
         database.child(userId).addValueEventListener(listener!!)
+    }
+
+    // Thêm method mới vào FirebaseCircleZoneDataSource.kt
+    fun getAllCircleZones(onData: (List<CircleZone>) -> Unit) {
+        database.get().addOnSuccessListener { snapshot ->
+            val result = mutableListOf<CircleZone>()
+            // level 1: userId node
+            snapshot.children.forEach { userNode ->
+                // level 2: zoneId node
+                userNode.children.forEach { zoneNode ->
+                    val zone = (zoneNode.value as? Map<String, Any?>)
+                        ?.let { CircleZone.fromMap(it) }
+                    if (zone != null) result.add(zone)
+                }
+            }
+            onData(result)
+        }.addOnFailureListener {
+            onData(emptyList())
+        }
     }
     //stop circle zone
     fun stopListening() {

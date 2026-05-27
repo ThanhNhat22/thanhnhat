@@ -1,13 +1,11 @@
 package com.app.findback.ui.fragments
 
-import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -37,13 +35,16 @@ class HomeFragment : Fragment(), ToolbarConfigProvider {
     private val binding get() = _binding!!
 
     private lateinit var homeAdapter: HomeAdapter
-    private lateinit var allPost: List<Post>
     private lateinit var postViewModel: PostViewModel
 
     private val notificationViewModel: NotificationViewModel by viewModels()
 
-    private var iconIB2 = R.drawable.ic_search
+    private var allPosts: List<Post> = emptyList()
     private var currentUnreadCount = 0
+
+    // ─────────────────────────────────────────────────────────────
+    // Lifecycle
+    // ─────────────────────────────────────────────────────────────
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -56,11 +57,15 @@ class HomeFragment : Fragment(), ToolbarConfigProvider {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
         setControl()
         setEvent()
-
         observeNotificationBadge()
     }
+
+    // ─────────────────────────────────────────────────────────────
+    // Setup
+    // ─────────────────────────────────────────────────────────────
 
     private fun setControl() {
         postViewModel = ViewModelProvider(requireActivity())[PostViewModel::class.java]
@@ -68,57 +73,32 @@ class HomeFragment : Fragment(), ToolbarConfigProvider {
     }
 
     private fun setEvent() {
-        getDataFromViewModel()
-        setRecyclerView()
-        filterPosts()
+        setupRecyclerView()
+        observePosts()
+        setupChipFilter()
+        //setupSwipeRefresh()
+
+        postViewModel.loadPosts()
     }
 
-    private fun getDataFromViewModel() {
-        postViewModel.postsShared.observe(viewLifecycleOwner) { posts ->
-            allPost = posts
-            homeAdapter.addNewData(allPost)
-        }
-    }
+    // ─────────────────────────────────────────────────────────────
+    // RecyclerView
+    // ─────────────────────────────────────────────────────────────
 
-    private fun setEventClickSearch() {
-        val intent = Intent(requireContext(), SearchPostActivity::class.java)
-        startActivity(intent)
-    }
-
-    private fun filterPosts() {
-        binding.cgChip.check(binding.cgChip.getChildAt(0).id)
-        binding.cgChip.setOnCheckedChangeListener { group, checkedId ->
-            for (i in 0 until group.childCount) {
-                val chip = group.getChildAt(i) as Chip
-                if (chip.id == checkedId) {
-                    when (chip.text) {
-                        "Tất cả" -> homeAdapter.addNewData(allPost)
-                        "Thất lạc" -> homeAdapter.addNewData(allPost.filter { it.postType == "lost" })
-                        "Tìm thấy" -> homeAdapter.addNewData(allPost.filter { it.postType == "found" })
-                        "Gần tôi" -> { /* TODO */ }
-                        else -> homeAdapter.addNewData(allPost)
-                    }
-                }
-            }
-        }
-    }
-
-    private fun setRecyclerView() {
-        val layoutManager = GridLayoutManager(requireContext(), 1).apply {
+    private fun setupRecyclerView() {
+        binding.rvPosts.layoutManager = GridLayoutManager(requireContext(), 1).apply {
             orientation = LinearLayoutManager.VERTICAL
         }
-        binding.rvPosts.layoutManager = layoutManager
         binding.rvPosts.adapter = homeAdapter
 
-        val layoutManagerVip = GridLayoutManager(requireContext(), 1).apply {
+        binding.rvPostsSuggest.layoutManager = GridLayoutManager(requireContext(), 1).apply {
             orientation = LinearLayoutManager.HORIZONTAL
         }
-        binding.rvPostsSuggest.layoutManager = layoutManagerVip
         binding.rvPostsSuggest.adapter = homeAdapter
 
         homeAdapter.setOnItemClickListener(object : HomeAdapter.OnItemClickListener {
             override fun onItemClick(position: Int) {
-                val postId = allPost[position].postId
+                val postId = allPosts[position].postId
                 Log.d("HomeFragment", "Clicked postId: $postId")
                 val intent = Intent(requireContext(), PostDetailActivity::class.java)
                 intent.putExtra("postId", postId)
@@ -126,7 +106,7 @@ class HomeFragment : Fragment(), ToolbarConfigProvider {
             }
 
             override fun onItemClickShare(position: Int) {
-                val postId = allPost[position].postId
+                val postId = allPosts[position].postId
                 val link = "https://metalk-a52fb.web.app/post/$postId"
                 val intent = Intent(Intent.ACTION_SEND).apply {
                     type = "text/plain"
@@ -136,10 +116,31 @@ class HomeFragment : Fragment(), ToolbarConfigProvider {
             }
 
             override fun onItemClickChat(position: Int) {
-                val post = allPost[position]
-                openChatWithPostOwner(post)
+                openChatWithPostOwner(allPosts[position])
             }
         })
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Swipe Refresh
+    // ─────────────────────────────────────────────────────────────
+
+    //private fun setupSwipeRefresh() {
+     //   binding.swipeRefresh.setOnRefreshListener {
+    //        postViewModel.loadPosts()
+    //    }
+    //}
+
+    // ─────────────────────────────────────────────────────────────
+    // Observe
+    // ─────────────────────────────────────────────────────────────
+
+    private fun observePosts() {
+        postViewModel.postsShared.observe(viewLifecycleOwner) { posts ->
+         //   binding.swipeRefresh.isRefreshing = false
+            allPosts = posts
+            applyCurrentFilter()
+        }
     }
 
     private fun observeNotificationBadge() {
@@ -151,28 +152,48 @@ class HomeFragment : Fragment(), ToolbarConfigProvider {
         }
     }
 
-    private fun refreshToolbar() {
-        (requireActivity() as? BaseBottomNavActivity)?.refreshToolbarForActiveFragment()
+    // ─────────────────────────────────────────────────────────────
+    // Chip Filter
+    // ─────────────────────────────────────────────────────────────
+
+    private fun setupChipFilter() {
+        binding.cgChip.check(binding.cgChip.getChildAt(0).id)
+        binding.cgChip.setOnCheckedStateChangeListener { _, _ ->
+            applyCurrentFilter()
+        }
     }
 
-    override fun toolbarConfig(): ToolbarConfig {
-        return ToolbarConfig(
-            titleResId = R.string.app_name,
-            isShowSearch = false,
-            isBack = false,
-            imageLogoRes = R.drawable.logo_tran,
-            ib1Res = R.drawable.ic_notification,
-            ib2Res = iconIB2,
-            ib1Badge = currentUnreadCount,
-            onIB1 = { openNotificationsScreen() },
-            onIB2 = { setEventClickSearch() }
-        )
+    private fun applyCurrentFilter() {
+        val checkedId = binding.cgChip.checkedChipId
+        val chipText = binding.cgChip
+            .findViewById<Chip>(checkedId)
+            ?.text?.toString() ?: ""
+
+        val filteredPosts = when {
+            chipText.contains("Thất lạc", ignoreCase = true) ->
+                allPosts.filter { it.postType == "lost" }
+            chipText.contains("Tìm thấy", ignoreCase = true) ->
+                allPosts.filter { it.postType == "found" }
+            chipText.contains("Gần tôi", ignoreCase = true) ->
+                allPosts // TODO: filter by location
+            else -> allPosts
+        }
+
+        homeAdapter.addNewData(filteredPosts)
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Actions
+    // ─────────────────────────────────────────────────────────────
+
+    private fun setEventClickSearch() {
+        startActivity(Intent(requireContext(), SearchPostActivity::class.java))
     }
 
     private fun openNotificationsScreen() {
         val activity = requireActivity()
         if (activity is BaseBottomNavActivity) {
-            activity.openNotificationsFragment()
+          //  activity.openNotificationsFragment()
         } else {
             activity.supportFragmentManager.beginTransaction()
                 .replace(R.id.fragmentContainer, NotificationsFragment())
@@ -201,8 +222,33 @@ class HomeFragment : Fragment(), ToolbarConfigProvider {
         startActivity(intent)
     }
 
+    private fun refreshToolbar() {
+        (requireActivity() as? BaseBottomNavActivity)?.refreshToolbarForActiveFragment()
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Toolbar
+    // ─────────────────────────────────────────────────────────────
+
+    override fun toolbarConfig() = ToolbarConfig(
+        titleResId = R.string.app_name,
+        isBack = false,
+        isShowSearch = false,
+        imageLogoRes = R.drawable.logo_tran,
+        ib1Res = R.drawable.ic_notification,
+        ib2Res = R.drawable.ic_search,
+        ib1Badge = currentUnreadCount,
+        onIB1 = { openNotificationsScreen() },
+        onIB2 = { setEventClickSearch() }
+    )
+
+    // ─────────────────────────────────────────────────────────────
+    // Destroy
+    // ─────────────────────────────────────────────────────────────
+
     override fun onDestroyView() {
         super.onDestroyView()
+        postViewModel.removeListener()
         _binding = null
     }
 }

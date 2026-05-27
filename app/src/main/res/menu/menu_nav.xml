@@ -9,6 +9,10 @@
         android:icon="@drawable/ic_map"
         android:title="Bản đồ"/>
     <item
+        android:id="@+id/nav_add"
+        android:icon="@drawable/ic_add"
+        android:title="Đăng bài"/>
+    <item
         android:id="@+id/nav_message"
         android:icon="@drawable/ic_message"
         android:title="Tin nhắn"/>

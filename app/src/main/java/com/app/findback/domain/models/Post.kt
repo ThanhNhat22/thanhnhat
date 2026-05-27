@@ -17,6 +17,7 @@ data class Post(
 	val longitude: Double = 0.0,
 	val imageUrl: String = "",
 	val status: String = "active",
+	val imageUrls: List<String> = emptyList(),
 	val viewCount: Int = 0,
 	val contactCount: Int = 0,
 	val createdAt: Long = 0L,
@@ -40,6 +41,7 @@ data class Post(
 			"latitude" to latitude,
 			"longitude" to longitude,
 			"imageUrl" to imageUrl,     // <-- thêm vào map
+			"imageUrls" to imageUrls,
 			"status" to status,
 			"viewCount" to viewCount,
 			"contactCount" to contactCount,
@@ -71,6 +73,10 @@ data class Post(
 				contactCount = (map["contactCount"] as? Number)?.toInt() ?: 0,
 				createdAt = (map["createdAt"] as? Number)?.toLong() ?: 0L,
 				updatedAt = (map["updatedAt"] as? Number)?.toLong() ?: 0L,
+				imageUrls =
+					(map["imageUrls"] as? List<*>)
+						?.filterIsInstance<String>()
+						?: emptyList(),
 			)
 		}
 	}

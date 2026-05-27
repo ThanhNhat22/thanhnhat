@@ -31,4 +31,40 @@
     <string name="register_now">Đăng ký</string>
     <string name="no_account">Chưa có tài khoản?</string>
     <string name="notifications">Thông báo</string>
+    <!-- ===== ADD POST ===== -->
+    <string name="cancel">Hủy bỏ</string>
+
+    <!-- ===== POST TYPE ===== -->
+    <string name="post_type">Hình thức đăng bài</string>
+    <string name="lost">Thất lạc</string>
+    <string name="found">Nhặt được</string>
+
+    <!-- ===== TITLE ===== -->
+    <string name="title_label">Tiêu đề bài đăng</string>
+    <string name="title_hint">Ví dụ: Mất ví màu đen</string>
+
+    <!-- ===== DESCRIPTION ===== -->
+    <string name="description_label">Mô tả chi tiết</string>
+    <string name="description_hint">
+        Ví dụ: Ví da màu đen, bên trong có CCCD và thẻ ngân hàng tên Nguyễn Văn A...
+    </string>
+
+    <!-- ===== IMAGE ===== -->
+    <string name="image_label">Hình ảnh đính kèm</string>
+    <string name="add_image">Thêm ảnh</string>
+
+    <!-- ===== LOCATION ===== -->
+    <string name="location_label">Địa điểm</string>
+    <string name="location_hint">Ví dụ: Công viên Lê Thị Riêng</string>
+
+    <!-- ===== VALIDATION ===== -->
+    <string name="error_empty_title">Vui lòng nhập tiêu đề</string>
+    <string name="error_empty_description">Vui lòng nhập mô tả</string>
+    <string name="error_empty_location">Vui lòng nhập địa điểm</string>
+
+    <!-- ===== SUCCESS ===== -->
+    <string name="post_success">Đăng bài thành công</string>
+    <string name="post_failed">Đăng bài thất bại</string>
+
+
 </resources>
