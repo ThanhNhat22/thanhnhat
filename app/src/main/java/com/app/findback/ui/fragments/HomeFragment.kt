@@ -86,11 +86,13 @@ class HomeFragment : Fragment(), ToolbarConfigProvider {
     // ─────────────────────────────────────────────────────────────
 
     private fun setupRecyclerView() {
+        // Main Posts
         binding.rvPosts.layoutManager = GridLayoutManager(requireContext(), 1).apply {
             orientation = LinearLayoutManager.VERTICAL
         }
         binding.rvPosts.adapter = homeAdapter
 
+        // Suggest Posts (Horizontal)
         binding.rvPostsSuggest.layoutManager = GridLayoutManager(requireContext(), 1).apply {
             orientation = LinearLayoutManager.HORIZONTAL
         }
@@ -98,10 +100,12 @@ class HomeFragment : Fragment(), ToolbarConfigProvider {
 
         homeAdapter.setOnItemClickListener(object : HomeAdapter.OnItemClickListener {
             override fun onItemClick(position: Int) {
-                val postId = allPosts[position].postId
-                Log.d("HomeFragment", "Clicked postId: $postId")
-                val intent = Intent(requireContext(), PostDetailActivity::class.java)
-                intent.putExtra("postId", postId)
+                val post = allPosts[position]
+
+                val intent = Intent(requireContext(), PostDetailActivity::class.java).apply {
+                    putExtra("postId", post.postId)
+                    putExtra("post", post)           // Truyền full object
+                }
                 startActivity(intent)
             }
 
@@ -122,22 +126,11 @@ class HomeFragment : Fragment(), ToolbarConfigProvider {
     }
 
     // ─────────────────────────────────────────────────────────────
-    // Swipe Refresh
-    // ─────────────────────────────────────────────────────────────
-
-    //private fun setupSwipeRefresh() {
-     //   binding.swipeRefresh.setOnRefreshListener {
-    //        postViewModel.loadPosts()
-    //    }
-    //}
-
-    // ─────────────────────────────────────────────────────────────
-    // Observe
+    // Observe Posts
     // ─────────────────────────────────────────────────────────────
 
     private fun observePosts() {
         postViewModel.postsShared.observe(viewLifecycleOwner) { posts ->
-         //   binding.swipeRefresh.isRefreshing = false
             allPosts = posts
             applyCurrentFilter()
         }
@@ -172,10 +165,13 @@ class HomeFragment : Fragment(), ToolbarConfigProvider {
         val filteredPosts = when {
             chipText.contains("Thất lạc", ignoreCase = true) ->
                 allPosts.filter { it.postType == "lost" }
+
             chipText.contains("Tìm thấy", ignoreCase = true) ->
                 allPosts.filter { it.postType == "found" }
+
             chipText.contains("Gần tôi", ignoreCase = true) ->
                 allPosts // TODO: filter by location
+
             else -> allPosts
         }
 
@@ -193,7 +189,7 @@ class HomeFragment : Fragment(), ToolbarConfigProvider {
     private fun openNotificationsScreen() {
         val activity = requireActivity()
         if (activity is BaseBottomNavActivity) {
-          //  activity.openNotificationsFragment()
+            activity.openNotificationsFragment()
         } else {
             activity.supportFragmentManager.beginTransaction()
                 .replace(R.id.fragmentContainer, NotificationsFragment())

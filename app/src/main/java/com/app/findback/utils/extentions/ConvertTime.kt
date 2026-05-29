@@ -6,11 +6,12 @@ import java.util.concurrent.TimeUnit
 
 object ConvertTime {
 
-    fun formatTime(time: String): String {
-        val date = parseDate(time) ?: return ""
+    fun formatTime(time: Long): String {
 
-        val now = Date()
-        val diff = now.time - date.time
+        if (time <= 0) return "Vừa xong"
+
+        val now = System.currentTimeMillis()
+        val diff = now - time
 
         val minutes = TimeUnit.MILLISECONDS.toMinutes(diff)
         val hours = TimeUnit.MILLISECONDS.toHours(diff)
@@ -21,16 +22,8 @@ object ConvertTime {
             minutes < 60 -> "$minutes phút trước"
             hours < 24 -> "$hours giờ trước"
             days < 7 -> "$days ngày trước"
-            else -> SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(date)
-        }
-    }
-
-    private fun parseDate(time: String): Date? {
-        return try {
-            val format = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
-            format.parse(time)
-        } catch (e: Exception) {
-            null
+            else -> SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+                .format(Date(time))
         }
     }
 }

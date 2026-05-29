@@ -4,9 +4,12 @@ import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.res.ColorStateList
 import android.os.Bundle
+import android.util.Log
 import android.view.MotionEvent
+import android.view.View
 import android.view.ViewConfiguration
 import android.widget.EditText
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.enableEdgeToEdge
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
@@ -21,6 +24,7 @@ import com.app.findback.ui.fragments.AddStatusFragment
 import com.app.findback.ui.fragments.HomeFragment
 import com.app.findback.ui.fragments.MapFragment
 import com.app.findback.ui.fragments.MessageFragment
+import com.app.findback.ui.fragments.NotificationsFragment
 import com.app.findback.ui.fragments.ProfileFragment
 import com.app.findback.ui.viewmodel.CircleZoneViewModel
 import com.app.findback.ui.viewmodel.PostViewModel
@@ -37,7 +41,7 @@ class BaseBottomNavActivity : BaseActivity() {
     private val messageFragment = MessageFragment()
     private val profileFragment = ProfileFragment()
 
-    private var activeFragment: Fragment = homeFragment
+    private lateinit var activeFragment: Fragment
 
     // Map menu -> fragment
     private val fragmentByItemId: Map<Int, Fragment> by lazy {
@@ -67,21 +71,51 @@ class BaseBottomNavActivity : BaseActivity() {
 
         setBottomNav()
 
+        if (intent.getBooleanExtra("open_message_tab", false)) {
+            openMessageFragment()
+        }
+
+        setBottomNavInsert()
+
         handleIntent(intent)
 
-        //getPosts()
+        getPosts()
+
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                if (supportFragmentManager.backStackEntryCount > 0) {
+                    val isNotificationFragment =
+                        supportFragmentManager.findFragmentByTag("notifications") != null
+
+                    supportFragmentManager.popBackStack()
+
+                    if (isNotificationFragment) {
+                        binding.bottomNav.visibility = View.VISIBLE
+                        refreshToolbarForActiveFragment()
+                    }
+                    return
+                }
+                finish()
+            }
+        })
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        if (intent.getBooleanExtra("open_message_tab", false)) {
+            openMessageFragment()
+        }
+        handleIntent(intent)
     }
 
     // Toolbar
     val getToolbar get() = binding.toolbarLayout.toolbar
 
     // Init
-    private fun setControl() {
-
+    fun setControl() {
         binding = ActivityBaseBottomNavBinding.inflate(layoutInflater)
-
         postViewModel = PostViewModel()
-
         circleZoneViewModel = CircleZoneViewModel()
     }
 
@@ -89,35 +123,40 @@ class BaseBottomNavActivity : BaseActivity() {
     var getLat: Double? = null
     var getLng: Double? = null
 
+    // Handle deeplink intent
     private fun handleIntent(intent: Intent) {
-
         val data = intent.data ?: return
-
         if (data.pathSegments.isEmpty()) return
 
         val tag = data.pathSegments[0]
 
-        if (tag == "map") {
+        when (tag) {
+            "map" -> {
+                val lat = data.pathSegments[2]
+                val lng = data.pathSegments[1]
 
-            val lng = data.pathSegments[1]
-            val lat = data.pathSegments[2]
+                getLat = lat.toDouble()
+                getLng = lng.toDouble()
 
-            getLat = lat.toDouble()
-            getLng = lng.toDouble()
+                binding.bottomNav.selectedItemId = R.id.nav_map
 
-            binding.bottomNav.selectedItemId = R.id.nav_map
+                binding.bottomNav.post {
+                    val mapFragment = supportFragmentManager
+                        .fragments
+                        .filterIsInstance<MapFragment>()
+                        .firstOrNull()
 
-            binding.bottomNav.post {
+                    mapFragment?.zoomToPost(lat.toDouble(), lng.toDouble())
+                }
+            }
 
-                val mapFragment = supportFragmentManager
-                    .fragments
-                    .filterIsInstance<MapFragment>()
-                    .firstOrNull()
+            "post" -> {
+                val postId = data.pathSegments[1]
+                Log.d("BaseBottomNavActivity", "Received postId from intent: $postId")
 
-                mapFragment?.zoomToPost(
-                    lat.toDouble(),
-                    lng.toDouble()
-                )
+                val intent = Intent(this, PostDetailActivity::class.java)
+                intent.putExtra("postId", postId)
+                startActivity(intent)
             }
         }
     }
@@ -128,57 +167,39 @@ class BaseBottomNavActivity : BaseActivity() {
     private fun setBottomNav() {
 
         binding.bottomNav.itemIconTintList = null
+        binding.bottomNav.itemTextColor = createBottomNavTextColors()
 
-        binding.bottomNav.itemTextColor =
-            createBottomNavTextColors()
+        val openMessage = intent.getBooleanExtra("open_message_tab", false)
 
-        setBottomNavIcons(R.id.nav_home)
+        val defaultFragment = if (openMessage) messageFragment else homeFragment
+        val defaultTab = if (openMessage) R.id.nav_message else R.id.nav_home
 
-        // Add fragments
+        activeFragment = defaultFragment
+
         supportFragmentManager.beginTransaction()
-
-            .add(
-                R.id.fragmentContainer,
-                homeFragment,
-                "homeFragment"
-            )
-
-            .add(
-                R.id.fragmentContainer,
-                mapFragment,
-                "mapFragment"
-            ).hide(mapFragment)
-
-            .add(
-                R.id.fragmentContainer,
-                addFragment,
-                "addFragment"
-            ).hide(addFragment)
-
-            .add(
-                R.id.fragmentContainer,
-                messageFragment,
-                "messageFragment"
-            ).hide(messageFragment)
-
-            .add(
-                R.id.fragmentContainer,
-                profileFragment,
-                "profileFragment"
-            ).hide(profileFragment)
-
+            .add(R.id.fragmentContainer, homeFragment, "homeFragment")
+            .add(R.id.fragmentContainer, mapFragment, "mapFragment").hide(mapFragment)
+            .add(R.id.fragmentContainer, addFragment, "addFragment").hide(addFragment)
+            .add(R.id.fragmentContainer, messageFragment, "messageFragment")
+            .add(R.id.fragmentContainer, profileFragment, "profileFragment").hide(profileFragment)
+            .apply {
+                when (defaultFragment) {
+                    homeFragment -> hide(messageFragment)
+                    messageFragment -> hide(homeFragment)
+                }
+            }
             .commit()
 
-        // Click bottom nav
+        setBottomNavIcons(defaultTab)
+
         binding.bottomNav.setOnItemSelectedListener { item ->
 
             val targetFragment =
                 fragmentByItemId[item.itemId]
                     ?: return@setOnItemSelectedListener false
 
-            if (targetFragment === activeFragment) {
+            if (targetFragment === activeFragment)
                 return@setOnItemSelectedListener true
-            }
 
             setBottomNavIcons(item.itemId)
 
@@ -191,23 +212,20 @@ class BaseBottomNavActivity : BaseActivity() {
             true
         }
 
-        applyToolbarForFragment(homeFragment)
+        applyToolbarForFragment(defaultFragment)
+        updateToolbarScrollBehavior(defaultFragment)
 
-        updateToolbarScrollBehavior(homeFragment)
-
-        binding.bottomNav.selectedItemId = R.id.nav_home
+        binding.bottomNav.selectedItemId = defaultTab
     }
 
     /**
      * Switch Fragment
      */
     private fun switchFragment(fragment: Fragment) {
-
         supportFragmentManager.beginTransaction()
             .hide(activeFragment)
             .show(fragment)
             .commit()
-
         activeFragment = fragment
     }
 
@@ -215,13 +233,8 @@ class BaseBottomNavActivity : BaseActivity() {
      * Toolbar
      */
     private fun applyToolbarForFragment(fragment: Fragment) {
-
-        val config =
-            (fragment as? ToolbarConfigProvider)
-                ?.toolbarConfig()
-                ?: ToolbarConfig(
-                    titleResId = R.string.app_name
-                )
+        val config = (fragment as? ToolbarConfigProvider)?.toolbarConfig()
+            ?: ToolbarConfig(titleResId = R.string.app_name)
 
         setupToolbarCus(
             toolbar = getToolbar,
@@ -232,6 +245,8 @@ class BaseBottomNavActivity : BaseActivity() {
             imageLogo = config.imageLogoRes,
             ib1 = config.ib1Res,
             ib2 = config.ib2Res,
+            ib1Badge = config.ib1Badge,
+            ib2Badge = config.ib2Badge,
             onIB1 = config.onIB1,
             onIB2 = config.onIB2
         )
@@ -241,45 +256,29 @@ class BaseBottomNavActivity : BaseActivity() {
         applyToolbarForFragment(activeFragment)
     }
 
-    fun getToolbarSearchInput(): EditText {
-        return binding.toolbarLayout.etSearch
-    }
+    fun getToolbarSearchInput(): EditText = binding.toolbarLayout.etSearch
 
     /**
      * Toolbar Scroll
      */
-    private fun updateToolbarScrollBehavior(
-        fragment: Fragment
-    ) {
-
+    private fun updateToolbarScrollBehavior(fragment: Fragment) {
         val toolbarLayoutParams =
-            getToolbar.layoutParams
-                    as? AppBarLayout.LayoutParams
-                ?: return
-
+            getToolbar.layoutParams as? AppBarLayout.LayoutParams ?: return
         val appBarLayout =
-            binding.toolbarLayout.root
-                    as? AppBarLayout
-                ?: return
+            binding.toolbarLayout.root as? AppBarLayout ?: return
 
         val isHome = fragment === homeFragment
 
-        val targetFlags =
-            if (isHome) {
-
-                AppBarLayout.LayoutParams.SCROLL_FLAG_SCROLL or
-                        AppBarLayout.LayoutParams.SCROLL_FLAG_ENTER_ALWAYS
-
-            } else {
-                0
-            }
+        val targetFlags = if (isHome) {
+            AppBarLayout.LayoutParams.SCROLL_FLAG_SCROLL or
+                    AppBarLayout.LayoutParams.SCROLL_FLAG_ENTER_ALWAYS
+        } else {
+            0
+        }
 
         if (toolbarLayoutParams.scrollFlags != targetFlags) {
-
             toolbarLayoutParams.scrollFlags = targetFlags
-
-            getToolbar.layoutParams =
-                toolbarLayoutParams
+            getToolbar.layoutParams = toolbarLayoutParams
         }
 
         if (!isHome) {
@@ -291,81 +290,48 @@ class BaseBottomNavActivity : BaseActivity() {
      * Bottom nav colors
      */
     private fun createBottomNavTextColors(): ColorStateList {
-
         val states = arrayOf(
             intArrayOf(android.R.attr.state_checked),
             intArrayOf(-android.R.attr.state_checked)
         )
-
         val colors = intArrayOf(
-            ContextCompat.getColor(
-                this,
-                R.color.primary_blue
-            ),
-
-            ContextCompat.getColor(
-                this,
-                R.color.bottom_nav_unselected
-            )
+            ContextCompat.getColor(this, R.color.primary_blue),
+            ContextCompat.getColor(this, R.color.bottom_nav_unselected)
         )
-
         return ColorStateList(states, colors)
     }
 
     /**
      * Bottom nav icons
      */
-    private fun setBottomNavIcons(
-        selectedItemId: Int
-    ) {
+    private fun setBottomNavIcons(selectedItemId: Int) {
+        binding.bottomNav.menu.findItem(R.id.nav_home).setIcon(
+            if (selectedItemId == R.id.nav_home) R.drawable.ic_home else R.drawable.ic_home_grey
+        )
+        binding.bottomNav.menu.findItem(R.id.nav_map).setIcon(
+            if (selectedItemId == R.id.nav_map) R.drawable.ic_map else R.drawable.ic_map_grey
+        )
+        binding.bottomNav.menu.findItem(R.id.nav_add).setIcon(
+            if (selectedItemId == R.id.nav_add) R.drawable.ic_add else R.drawable.ic_add_grey
+        )
+        binding.bottomNav.menu.findItem(R.id.nav_message).setIcon(
+            if (selectedItemId == R.id.nav_message) R.drawable.ic_message else R.drawable.ic_message_grey
+        )
+        binding.bottomNav.menu.findItem(R.id.nav_profile).setIcon(
+            if (selectedItemId == R.id.nav_profile) R.drawable.ic_profile else R.drawable.ic_profile_grey
+        )
+    }
 
-        binding.bottomNav.menu.findItem(R.id.nav_home)
-            .setIcon(
-                if (selectedItemId == R.id.nav_home)
-                    R.drawable.ic_home
-                else
-                    R.drawable.ic_home_grey
-            )
-
-        binding.bottomNav.menu.findItem(R.id.nav_map)
-            .setIcon(
-                if (selectedItemId == R.id.nav_map)
-                    R.drawable.ic_map
-                else
-                    R.drawable.ic_map_grey
-            )
-
-        binding.bottomNav.menu.findItem(R.id.nav_add)
-            .setIcon(
-                if (selectedItemId == R.id.nav_add)
-                    R.drawable.ic_add
-                else
-                    R.drawable.ic_add_grey
-            )
-
-        binding.bottomNav.menu.findItem(R.id.nav_message)
-            .setIcon(
-                if (selectedItemId == R.id.nav_message)
-                    R.drawable.ic_message
-                else
-                    R.drawable.ic_message_grey
-            )
-
-        binding.bottomNav.menu.findItem(R.id.nav_profile)
-            .setIcon(
-                if (selectedItemId == R.id.nav_profile)
-                    R.drawable.ic_profile
-                else
-                    R.drawable.ic_profile_grey
-            )
+    private fun setBottomNavInsert() {
+        setupBottomNavInsertCus(binding.bottomNav)
     }
 
     /**
      * Get posts
      */
-    /* private fun getPosts() {
-         postViewModel.getPosts()
-     }*/
+    private fun getPosts() {
+        postViewModel.getPosts()
+    }
 
     /**
      * Floating AI Chat
@@ -374,120 +340,64 @@ class BaseBottomNavActivity : BaseActivity() {
     private fun setupDraggableAiChat() {
 
         val parentView = binding.main
-
         val chatView = binding.floatingChat.chatBoxAi
-
-        val touchSlop =
-            ViewConfiguration.get(this)
-                .scaledTouchSlop
+        val touchSlop = ViewConfiguration.get(this).scaledTouchSlop
 
         var downRawX = 0f
         var downRawY = 0f
-
         var dX = 0f
         var dY = 0f
-
         var isDragging = false
 
         chatView.setOnTouchListener { v, event ->
-
             when (event.actionMasked) {
 
                 MotionEvent.ACTION_DOWN -> {
-
                     downRawX = event.rawX
                     downRawY = event.rawY
-
                     dX = v.x - downRawX
                     dY = v.y - downRawY
-
                     isDragging = false
-
                     true
                 }
 
                 MotionEvent.ACTION_MOVE -> {
+                    val moveX = event.rawX - downRawX
+                    val moveY = event.rawY - downRawY
 
-                    val moveX =
-                        event.rawX - downRawX
-
-                    val moveY =
-                        event.rawY - downRawY
-
-                    if (!isDragging &&
-                        (
-                                abs(moveX) > touchSlop ||
-                                        abs(moveY) > touchSlop
-                                )
-                    ) {
+                    if (!isDragging && (abs(moveX) > touchSlop || abs(moveY) > touchSlop)) {
                         isDragging = true
                     }
 
                     if (isDragging) {
+                        val insets = ViewCompat.getRootWindowInsets(parentView)
+                            ?.getInsets(androidx.core.view.WindowInsetsCompat.Type.systemBars())
 
-                        val insets =
-                            ViewCompat.getRootWindowInsets(parentView)
-                                ?.getInsets(
-                                    androidx.core.view.WindowInsetsCompat.Type.systemBars()
-                                )
-
-                        val leftBound =
-                            (insets?.left ?: 0).toFloat()
-
-                        val topBound =
-                            (insets?.top ?: 0).toFloat()
-
+                        val leftBound = (insets?.left ?: 0).toFloat()
+                        val topBound = (insets?.top ?: 0).toFloat()
                         val rightBound =
-                            (
-                                    parentView.width
-                                            - v.width
-                                            - (insets?.right ?: 0)
-                                    ).toFloat()
+                            (parentView.width - v.width - (insets?.right ?: 0)).toFloat()
+                        val navHeight = binding.bottomNav.height
+                        val gap = (12 * resources.displayMetrics.density).toInt()
+                        val bottomBound = (
+                                parentView.height
+                                        - v.height
+                                        - (insets?.bottom ?: 0)
+                                        - navHeight
+                                        - gap
+                                ).toFloat()
 
-                        val navHeight =
-                            binding.bottomNav.height
-
-                        val gap =
-                            (
-                                    12 * resources.displayMetrics.density
-                                    ).toInt()
-
-                        val bottomBound =
-                            (
-                                    parentView.height
-                                            - v.height
-                                            - (insets?.bottom ?: 0)
-                                            - navHeight
-                                            - gap
-                                    ).toFloat()
-
-                        val targetX =
-                            (event.rawX + dX)
-                                .coerceIn(
-                                    leftBound,
-                                    rightBound
-                                )
-
-                        val targetY =
-                            (event.rawY + dY)
-                                .coerceIn(
-                                    topBound,
-                                    bottomBound
-                                )
+                        val targetX = (event.rawX + dX).coerceIn(leftBound, rightBound)
+                        val targetY = (event.rawY + dY).coerceIn(topBound, bottomBound)
 
                         v.x = targetX
                         v.y = targetY
                     }
-
                     true
                 }
 
                 MotionEvent.ACTION_UP -> {
-
-                    if (!isDragging) {
-                        v.performClick()
-                    }
-
+                    if (!isDragging) v.performClick()
                     true
                 }
 
@@ -496,14 +406,48 @@ class BaseBottomNavActivity : BaseActivity() {
         }
 
         chatView.setOnClickListener {
-
-            val intent =
-                Intent(
-                    this,
-                    ChatAIActivity::class.java
-                )
-
+            val intent = Intent(this, ChatAIActivity::class.java)
             startActivity(intent)
         }
+    }
+
+    /**
+     * Open Message Fragment directly
+     */
+    private fun openMessageFragment() {
+        if (activeFragment === messageFragment) return
+
+        setBottomNavIcons(R.id.nav_message)
+
+        supportFragmentManager.beginTransaction()
+            .hide(activeFragment)
+            .show(messageFragment)
+            .commit()
+
+        activeFragment = messageFragment
+
+        applyToolbarForFragment(messageFragment)
+        updateToolbarScrollBehavior(messageFragment)
+
+        binding.bottomNav.menu.findItem(R.id.nav_message).isChecked = true
+    }
+
+    /**
+     * Open Notifications Fragment
+     */
+    fun openNotificationsFragment() {
+        val notificationsFragment = NotificationsFragment()
+
+        binding.bottomNav.visibility = View.GONE
+
+        supportFragmentManager.beginTransaction()
+            .hide(activeFragment)
+            .replace(R.id.fragmentContainer, notificationsFragment, "notifications")
+            .addToBackStack("notifications")
+            .commitAllowingStateLoss()
+
+        binding.bottomNav.postDelayed({
+            applyToolbarForFragment(notificationsFragment)
+        }, 150)
     }
 }

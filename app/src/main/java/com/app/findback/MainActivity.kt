@@ -19,7 +19,6 @@ import com.onesignal.notifications.INotificationClickEvent
 import com.onesignal.notifications.INotificationClickListener
 import com.onesignal.notifications.INotificationLifecycleListener
 import com.onesignal.notifications.INotificationWillDisplayEvent
-import kotlinx.coroutines.launch
 
 class MainActivity : BaseActivity() {
 
@@ -34,19 +33,16 @@ class MainActivity : BaseActivity() {
         setContentView(binding.root)
 
         NotificationHelper.createNotificationChannel(this)
-
         application.registerActivityLifecycleCallbacks(AppActivityTracker)
 
-        setupOneSignal()
+        setupOneSignalListeners()
         setToolbar()
         navigateToMainScreen()
-
         saveFcmToken()
-
     }
 
-    private fun setupOneSignal() {
-        OneSignal.initWithContext(this, "bdf5516d-cd73-4dd2-b189-c429f8311bd5")
+
+    private fun setupOneSignalListeners() {
 
         OneSignal.Notifications.addForegroundLifecycleListener(object : INotificationLifecycleListener {
             override fun onWillDisplay(event: INotificationWillDisplayEvent) {
@@ -66,16 +62,14 @@ class MainActivity : BaseActivity() {
 
                 val otherUserId = data.optString("otherUserId", "")
 
-
                 if (otherUserId == currentUserId) {
                     event.preventDefault()
                     return
                 }
-                
+
                 event.preventDefault()
 
                 val conversationId = data.optString("conversationId", "")
-                val senderId = otherUserId
                 val senderName = data.optString("otherUserName", "")
                     ?: osNotification.title ?: "Người dùng"
 
@@ -85,7 +79,7 @@ class MainActivity : BaseActivity() {
                     content = osNotification.body ?: "",
                     senderName = senderName,
                     conversationId = conversationId,
-                    senderId = senderId,
+                    senderId = otherUserId,
                     senderAvatar = ""
                 )
 
@@ -106,29 +100,23 @@ class MainActivity : BaseActivity() {
             }
         })
 
-        // Click listener giữ nguyên
         OneSignal.Notifications.addClickListener(object : INotificationClickListener {
             override fun onClick(event: INotificationClickEvent) {
                 val data = event.notification.additionalData ?: return
-
                 val intent = Intent(this@MainActivity, ChatActivity::class.java).apply {
                     putExtra(ChatActivity.EXTRA_CONVERSATION_ID, data.optString("conversationId", ""))
                     putExtra(ChatActivity.EXTRA_OTHER_USER_ID, data.optString("otherUserId", ""))
                     putExtra(ChatActivity.EXTRA_OTHER_USER_NAME, data.optString("otherUserName", ""))
-                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                    addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 }
                 startActivity(intent)
+                finish()
             }
         })
-
-        lifecycleScope.launch {
-            OneSignal.Notifications.requestPermission(true)
-        }
     }
 
-    private fun getCurrentUserId(): String {
-        return firebaseAuth.currentUser?.uid ?: ""
-    }
+    private fun getCurrentUserId(): String = firebaseAuth.currentUser?.uid ?: ""
 
     private fun navigateToMainScreen() {
         startActivity(Intent(this, BaseBottomNavActivity::class.java))
@@ -147,6 +135,7 @@ class MainActivity : BaseActivity() {
             R.drawable.ic_search
         )
     }
+
     private fun saveFcmToken() {
         val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return
         FirebaseMessaging.getInstance().token

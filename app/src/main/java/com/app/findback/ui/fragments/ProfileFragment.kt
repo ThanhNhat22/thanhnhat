@@ -29,12 +29,21 @@ class ProfileFragment : Fragment(), ToolbarConfigProvider {
 
     private val postList = mutableListOf<Post>()
 
+    // Firebase listener
+    private var postsListener: ValueEventListener? = null
+    private lateinit var postsRef: Query
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        _binding = FragmentProfileBinding.inflate(inflater, container, false)
+
+        _binding = FragmentProfileBinding.inflate(
+            inflater,
+            container,
+            false
+        )
 
         auth = FirebaseAuth.getInstance()
 
@@ -47,16 +56,24 @@ class ProfileFragment : Fragment(), ToolbarConfigProvider {
     }
 
     private fun setupRecyclerView() {
+
         adapter = MyPostAdapter(
             list = postList,
             isMyPost = true,
 
             onEdit = { post ->
-                val bottomSheet = EditPostBottomSheet.newInstance(post)
+
+                val bottomSheet =
+                    EditPostBottomSheet.newInstance(post)
+
                 bottomSheet.setOnDismissListener {
-                    // Firebase realtime tự cập nhật, không cần reload thủ công
+                    // Firebase realtime tự cập nhật
                 }
-                bottomSheet.show(parentFragmentManager, "EditPost")
+
+                bottomSheet.show(
+                    parentFragmentManager,
+                    "EditPost"
+                )
             },
 
             onDelete = { post ->
@@ -75,6 +92,8 @@ class ProfileFragment : Fragment(), ToolbarConfigProvider {
 
                             .addOnSuccessListener {
 
+                                if (_binding == null) return@addOnSuccessListener
+
                                 Toast.makeText(
                                     requireContext(),
                                     "Đã xóa bài đăng",
@@ -83,6 +102,8 @@ class ProfileFragment : Fragment(), ToolbarConfigProvider {
                             }
 
                             .addOnFailureListener {
+
+                                if (_binding == null) return@addOnFailureListener
 
                                 Toast.makeText(
                                     requireContext(),
@@ -101,29 +122,44 @@ class ProfileFragment : Fragment(), ToolbarConfigProvider {
         )
 
         binding.rvMyPosts.apply {
-            layoutManager = LinearLayoutManager(requireContext())
+
+            layoutManager =
+                LinearLayoutManager(requireContext())
+
             adapter = this@ProfileFragment.adapter
         }
     }
 
     private fun loadUserInfo() {
+
         val user = auth.currentUser ?: return
 
-        binding.txtEmail.text = user.email ?: ""
+        binding.txtEmail.text =
+            user.email ?: ""
 
         FirebaseDatabase.getInstance()
             .getReference("users")
             .child(user.uid)
             .get()
+
             .addOnSuccessListener { snapshot ->
-                val fullName = snapshot.child("fullName")
-                    .value?.toString() ?: "Người dùng"
-                val avatar = snapshot.child("avatar")
-                    .value?.toString() ?: ""
+
+                if (_binding == null) return@addOnSuccessListener
+
+                val fullName =
+                    snapshot.child("fullName")
+                        .value?.toString()
+                        ?: "Người dùng"
+
+                val avatar =
+                    snapshot.child("avatar")
+                        .value?.toString()
+                        ?: ""
 
                 binding.txtName.text = fullName
 
                 if (avatar.isNotEmpty()) {
+
                     Glide.with(requireContext())
                         .load(avatar)
                         .placeholder(R.drawable.logo_tran)
@@ -131,8 +167,13 @@ class ProfileFragment : Fragment(), ToolbarConfigProvider {
                         .into(binding.imgAvatar)
                 }
             }
+
             .addOnFailureListener {
-                binding.txtName.text = user.displayName ?: "Người dùng"
+
+                if (_binding == null) return@addOnFailureListener
+
+                binding.txtName.text =
+                    user.displayName ?: "Người dùng"
             }
     }
 
@@ -140,62 +181,78 @@ class ProfileFragment : Fragment(), ToolbarConfigProvider {
 
         val uid = auth.currentUser?.uid ?: return
 
-        FirebaseDatabase.getInstance()
+        postsRef = FirebaseDatabase.getInstance()
             .getReference("posts")
             .orderByChild("userId")
             .equalTo(uid)
-            .addValueEventListener(object : ValueEventListener {
 
-                override fun onDataChange(snapshot: DataSnapshot) {
+        postsListener = object : ValueEventListener {
 
-                    postList.clear()
+            override fun onDataChange(snapshot: DataSnapshot) {
 
-                    for (data in snapshot.children) {
+                if (_binding == null) return
 
-                        try {
+                postList.clear()
 
-                            val map =
-                                data.value as? Map<String, Any?>
-                                    ?: continue
+                for (data in snapshot.children) {
 
-                            val post = Post.fromMap(map)
+                    try {
 
-                            postList.add(post)
+                        val map =
+                            data.value as? Map<String, Any?>
+                                ?: continue
 
-                        } catch (e: Exception) {
+                        val post = Post.fromMap(map)
 
-                            e.printStackTrace()
-                        }
+                        postList.add(post)
+
+                    } catch (e: Exception) {
+
+                        e.printStackTrace()
                     }
-
-                    // Sắp xếp bài mới nhất lên đầu
-                    postList.sortByDescending { it.createdAt }
-
-                    // Update UI
-                    binding.txtPostCount.text =
-                        postList.size.toString()
-
-                    adapter.notifyDataSetChanged()
                 }
 
-                override fun onCancelled(error: DatabaseError) {
-
-                    Toast.makeText(
-                        requireContext(),
-                        error.message,
-                        Toast.LENGTH_SHORT
-                    ).show()
+                // Bài mới nhất lên đầu
+                postList.sortByDescending {
+                    it.createdAt
                 }
-            })
+
+                binding.txtPostCount.text =
+                    postList.size.toString()
+
+                adapter.notifyDataSetChanged()
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+
+                if (_binding == null) return
+
+                Toast.makeText(
+                    requireContext(),
+                    error.message,
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+        }
+
+        postsRef.addValueEventListener(postsListener!!)
     }
 
     private fun setupActions() {
+
         binding.btnEditProfile.setOnClickListener {
-            val bottomSheet = EditProfileBottomSheet()
+
+            val bottomSheet =
+                EditProfileBottomSheet()
+
             bottomSheet.setOnDismissListener {
                 loadUserInfo()
             }
-            bottomSheet.show(parentFragmentManager, "EditProfileBottomSheet")
+
+            bottomSheet.show(
+                parentFragmentManager,
+                "EditProfileBottomSheet"
+            )
         }
 
         binding.btnLogout.setOnClickListener {
@@ -203,9 +260,12 @@ class ProfileFragment : Fragment(), ToolbarConfigProvider {
             android.app.AlertDialog.Builder(requireContext())
                 .setTitle("Đăng xuất")
                 .setMessage("Bạn chắc chắn muốn đăng xuất?")
+
                 .setPositiveButton("Đăng xuất") { _, _ ->
 
                     auth.signOut()
+
+                    if (_binding == null) return@setPositiveButton
 
                     Toast.makeText(
                         requireContext(),
@@ -213,19 +273,25 @@ class ProfileFragment : Fragment(), ToolbarConfigProvider {
                         Toast.LENGTH_SHORT
                     ).show()
 
-                    val intent = Intent(requireContext(), LoginActivity::class.java)
+                    val intent = Intent(
+                        requireContext(),
+                        LoginActivity::class.java
+                    )
+
                     intent.flags =
-                        Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                        Intent.FLAG_ACTIVITY_NEW_TASK or
+                                Intent.FLAG_ACTIVITY_CLEAR_TASK
 
                     startActivity(intent)
+
                     requireActivity().finish()
                 }
 
                 .setNegativeButton("Hủy", null)
+
                 .show()
         }
     }
-
 
     override fun toolbarConfig() = ToolbarConfig(
         titleResId = R.string.nav_profile,
@@ -234,7 +300,13 @@ class ProfileFragment : Fragment(), ToolbarConfigProvider {
     )
 
     override fun onDestroyView() {
-        super.onDestroyView()
+
+        postsListener?.let {
+            postsRef.removeEventListener(it)
+        }
+
         _binding = null
+
+        super.onDestroyView()
     }
 }

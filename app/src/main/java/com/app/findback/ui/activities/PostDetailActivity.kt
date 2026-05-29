@@ -3,97 +3,191 @@ package com.app.findback.ui.activities
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
-import androidx.activity.enableEdgeToEdge
+import android.widget.Toast
 import androidx.core.view.isVisible
-import androidx.lifecycle.ViewModelProvider
+import androidx.viewpager2.widget.ViewPager2
 import com.app.findback.BaseActivity
 import com.app.findback.R
 import com.app.findback.databinding.ActivityPostDetailBinding
-import com.app.findback.domain.models.MessagePost
 import com.app.findback.domain.models.Post
-import com.app.findback.ui.viewmodel.PostViewModel
+import com.app.findback.ui.adapters.PostImageAdapter
 import com.app.findback.utils.extentions.ConvertTime
+import com.bumptech.glide.Glide
+import com.google.android.material.tabs.TabLayoutMediator
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.FirebaseDatabase
 import org.osmdroid.util.GeoPoint
-import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
+import android.os.Build
 
 class PostDetailActivity : BaseActivity() {
 
     private lateinit var binding: ActivityPostDetailBinding
-    private lateinit var postId: String
-    private lateinit var postViewModel: PostViewModel
+    private var postId: String = ""
     private var currentPost: Post? = null
-    private lateinit var map: MapView
+
+    private val db = FirebaseDatabase.getInstance()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+
         binding = ActivityPostDetailBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        setControl()
-        setEvent()
-    }
+        postId = intent.getStringExtra("postId") ?: ""
 
-    private fun setControl() {
-        postViewModel = ViewModelProvider(this)[PostViewModel::class.java]
-        postId = getPostId()
-        map = binding.map
-    }
-
-    private fun getPostId(): String {
-        return intent.getStringExtra("postId") ?: ""
-    }
-
-    private fun setEvent() {
         setupToolbarCus(
-            toolbar = binding.toolbarLayout.toolbar,
-            title = getString(R.string.post_detail_title),
-            isShowSearch = false,
+            binding.toolbarLayout.toolbar,
+            "Chi tiết bài đăng",
             isBack = true,
-            onBack = { setKeybroad() }
+            isShowSearch = false
         )
 
-        getDataFromViewModel()
-        setOnClickListeners()
+        handlePostData()
+        setEvents()
     }
 
-    private fun getDataFromViewModel() {
-        postViewModel.postsShared.observe(this) { posts ->
-            val found = posts.find { it.postId == postId }
-            found?.let {
-                currentPost = it
-                setDataToUI(it)
+    private fun handlePostData() {
+        val postFromIntent: Post? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            intent.getParcelableExtra("post", Post::class.java)
+        } else {
+            @Suppress("DEPRECATION")
+            intent.getParcelableExtra("post")
+        }
+
+        if (postFromIntent != null) {
+            currentPost = postFromIntent
+            bind(postFromIntent)
+
+            if (postFromIntent.imageUrl.isEmpty() && postFromIntent.imageUrls.isEmpty() ||
+                postFromIntent.userAvatar.isEmpty()) {
+                loadFullPostFromFirebase(postFromIntent.postId)
             }
+        } else {
+            loadPostFromFirebase()
         }
     }
 
-    private fun setDataToUI(post: Post) {
+    private fun loadFullPostFromFirebase(postId: String) {
+        db.getReference("posts").child(postId)
+            .get()
+            .addOnSuccessListener { snap ->
+                if (snap.exists()) {
+                    val map = snap.value as? Map<String, Any?> ?: return@addOnSuccessListener
+                    val fullPost = Post.fromMap(map)
+                    currentPost = fullPost
+                    bind(fullPost)
+                }
+            }
+    }
+
+    private fun loadPostFromFirebase() {
+        if (postId.isEmpty()) {
+            finish()
+            return
+        }
+
+        db.getReference("posts").child(postId)
+            .get()
+            .addOnSuccessListener { snap ->
+                if (snap.exists()) {
+                    val post = Post.fromMap(snap.value as Map<String, Any?>)
+                    currentPost = post
+                    bind(post)
+                }
+            }
+    }
+
+    // ================= BIND UI =================
+    private fun bind(post: Post) {
+        binding.tvTitle.text = post.title.ifEmpty { "Không có tiêu đề" }
+        binding.tvDescription.text = post.description.ifEmpty { "Không có mô tả" }
+        binding.tvName.text = post.userName.ifEmpty { "Người dùng" }
+
+        binding.tvTime.text = if (post.createdAt == 0L) "Vừa xong"
+        else ConvertTime.formatTime(post.createdAt)
+
+     /*   binding.tvTimePerfrom.text = if (post.incidentDatetime <= 0L)
+            "Không rõ thời gian" else ConvertTime.formatTime(post.incidentDatetime)*/
+
+        // Status
+        binding.tvStatus.text = if (post.postType == "lost") "Thất lạc" else "Tìm thấy"
+        binding.tvStatus.setTextColor(
+            getColor(if (post.postType == "lost") R.color.primary_red else R.color.primary_green)
+        )
+
+        // Multi Images
+        val images = if (post.imageUrls.isNotEmpty()) post.imageUrls
+        else if (post.imageUrl.isNotEmpty()) listOf(post.imageUrl)
+        else emptyList()
+        setupImagePager(images)
+
+        // Load Avatar từ node users
+        loadUserAvatar(post.userId)
+
         binding.btnChat.isVisible = post.userId != FirebaseAuth.getInstance().currentUser?.uid
-        binding.apply {
-            tvTitle.text = post.title ?: ""
-            tvTime.text = ConvertTime.formatTime(post.createdAt.toString()) ?: ""
-            tvDescription.text = post.description ?: ""
-            tvTimePerfrom.text = ConvertTime.formatTime(post.incidentDatetime) ?: ""
 
-            if (post.postType == "lost") {
-                tvStatus.text = "Thất lạc"
-                tvStatus.setTextColor(resources.getColor(R.color.primary_red))
-            } else {
-                tvStatus.text = "Tìm thấy"
-                tvStatus.setTextColor(resources.getColor(R.color.primary_green))
-            }
-        }
-        zoomMap()
+        setupMap(post)
     }
 
+    private fun setupImagePager(images: List<String>) {
+        if (images.isEmpty()) {
+            binding.viewPagerImages.isVisible = false
+            return
+        }
 
+        val adapter = PostImageAdapter(images)
+        binding.viewPagerImages.adapter = adapter
 
-    private fun setOnClickListeners() {
+        TabLayoutMediator(binding.tabIndicator, binding.viewPagerImages) { _, _ -> }.attach()
+    }
+
+    private fun loadUserAvatar(userId: String) {
+        db.getReference("users").child(userId).get()
+            .addOnSuccessListener { snap ->
+                val avatarUrl = snap.child("avatar").getValue(String::class.java)
+                    ?: snap.child("photoUrl").getValue(String::class.java) ?: ""
+
+                Glide.with(this)
+                    .load(avatarUrl.ifEmpty { R.drawable.logo_tran })
+                    .circleCrop()
+                    .placeholder(R.drawable.logo_tran)
+                    .into(binding.imgAvatar)
+            }
+            .addOnFailureListener {
+                Glide.with(this)
+                    .load(R.drawable.logo_tran)
+                    .circleCrop()
+                    .into(binding.imgAvatar)
+            }
+    }
+
+    private fun setupMap(post: Post) {
+        if (post.latitude == 0.0 && post.longitude == 0.0) {
+            binding.mapCard.isVisible = false
+            return
+        }
+
+        val geo = GeoPoint(post.latitude, post.longitude)
+        binding.map.post {
+            binding.map.controller.setZoom(15.0)
+            binding.map.controller.setCenter(geo)
+
+            val marker = Marker(binding.map)
+            marker.position = geo
+            marker.icon = getDrawable(if (post.postType == "found") R.drawable.ic_location_green else R.drawable.ic_location_red)
+            marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
+
+            binding.map.overlays.clear()
+            binding.map.overlays.add(marker)
+            binding.map.invalidate()
+        }
+    }
+
+    private fun setEvents() {
         binding.btnShare.setOnClickListener {
-            currentPost?.let { post ->
-                val link = "https://metalk-a52fb.web.app/post/${post.postId}"
+            currentPost?.let {
+                val link = "https://metalk-a52fb.web.app/post/${it.postId}"
                 val intent = Intent(Intent.ACTION_SEND).apply {
                     type = "text/plain"
                     putExtra(Intent.EXTRA_TEXT, link)
@@ -102,110 +196,33 @@ class PostDetailActivity : BaseActivity() {
             }
         }
 
-        // Nút Nhắn tin
         binding.btnChat.setOnClickListener {
-            currentPost?.let { post ->
-                openChatWithPostOwner(post)
-            }
+            currentPost?.let { openChat(it) }
+        }
+
+        binding.btnSave.setOnClickListener {
+            Toast.makeText(this, "Đã lưu bài viết", Toast.LENGTH_SHORT).show()
         }
     }
 
-    private fun openChatWithPostOwner(post: Post) {
-        val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: ""
-
+    private fun openChat(post: Post) {
         val intent = Intent(this, ChatActivity::class.java).apply {
-            putExtra("from_post_detail", true)
             putExtra(ChatActivity.EXTRA_OTHER_USER_ID, post.userId)
-            putExtra(ChatActivity.EXTRA_OTHER_USER_NAME, post.userName ?: "Người dùng")
-            putExtra(ChatActivity.EXTRA_OTHER_USER_AVATAR, post.userAvatar ?: "")
-            // Truyền thông tin bài post để hiển thị preview
+            putExtra(ChatActivity.EXTRA_OTHER_USER_NAME, post.userName)
+            putExtra(ChatActivity.EXTRA_OTHER_USER_AVATAR, post.userAvatar)
             putExtra(ChatActivity.EXTRA_SEND_POST_ID, post.postId)
             putExtra(ChatActivity.EXTRA_SEND_POST_TITLE, post.title)
-            putExtra(ChatActivity.EXTRA_SEND_POST_IMAGE, post.imageUrl)
-            putExtra(ChatActivity.EXTRA_SEND_POST_DESC, post.description)
         }
-
-        chatLauncher.launch(intent)
-
-    }
-    private fun showToast(message: String) {
-        android.widget.Toast.makeText(this, message, android.widget.Toast.LENGTH_SHORT).show()
-    }
-
-    private val chatLauncher =
-        registerForActivityResult(
-            androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult()
-        ) { result ->
-
-            if (result.resultCode == RESULT_OK &&
-                result.data?.getBooleanExtra("open_message_tab", false) == true
-            ) {
-
-                val intent = Intent(
-                    this,
-                    BaseBottomNavActivity::class.java
-                ).apply {
-
-                    putExtra("open_message_tab", true)
-
-                    flags =
-                        Intent.FLAG_ACTIVITY_CLEAR_TOP or
-                                Intent.FLAG_ACTIVITY_SINGLE_TOP
-                }
-
-                startActivity(intent)
-
-            }
-        }
-    private fun zoomMap() {
-        map.setMultiTouchControls(false)
-        map.setOnTouchListener { _, event ->
-            if (event.action == android.view.MotionEvent.ACTION_UP) {
-                currentPost?.let {
-                    val uriString = "https://metalk-a52fb.web.app/map/${it.longitude}/${it.latitude}"
-                    val uri = android.net.Uri.parse(uriString)
-
-                    val intent = Intent(this@PostDetailActivity, com.app.findback.ui.activities.BaseBottomNavActivity::class.java).apply {
-                        data = uri
-                        flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
-                    }
-                    startActivity(intent)
-                    finish()
-                }
-            }
-            true
-        }
-
-        currentPost?.let {
-            val geoPoint = GeoPoint(it.latitude, it.longitude)
-
-            map.post {
-                map.controller.setZoom(15.0)
-                map.controller.setCenter(geoPoint)
-
-                val marker = Marker(map)
-                marker.position = geoPoint
-                marker.icon = if (it.postType.equals("Found", ignoreCase = true) || it.postType.equals("found", ignoreCase = true))
-                    getDrawable(R.drawable.ic_location_green)
-                else
-                    getDrawable(R.drawable.ic_location_red)
-
-                marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
-
-                map.overlays.clear()
-                map.overlays.add(marker)
-                map.invalidate()
-            }
-        }
+        startActivity(intent)
     }
 
     override fun onResume() {
         super.onResume()
-        map.onResume()
+        binding.map.onResume()
     }
 
     override fun onPause() {
         super.onPause()
-        map.onPause()
+        binding.map.onPause()
     }
 }

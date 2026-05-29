@@ -1,9 +1,8 @@
-<?xml version="1.0" encoding="utf-8"?>
 <com.google.android.material.appbar.AppBarLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    xmlns:tools="http://schemas.android.com/tools"
     android:background="@color/white">
 
     <com.google.android.material.appbar.MaterialToolbar
@@ -74,7 +73,6 @@
                         android:paddingTop="0dp"
                         android:paddingBottom="0dp" />
                 </com.google.android.material.textfield.TextInputLayout>
-
             </LinearLayout>
 
             <LinearLayout
@@ -92,13 +90,12 @@
                         android:id="@+id/ib1"
                         android:layout_width="34dp"
                         android:layout_height="34dp"
+                        android:layout_gravity="center"
                         android:background="@drawable/ic_button_background"
                         android:padding="0dp"
-                        android:layout_gravity="center"
                         android:scaleType="centerInside"
                         android:visibility="gone" />
-
-                    <!-- Badge nằm chồng lên icon -->
+                    <!--  Badge nằm chồng lên icon  -->
                     <TextView
                         android:id="@+id/tvBadge1"
                         android:layout_width="16dp"
@@ -113,8 +110,8 @@
                         android:textStyle="bold"
                         android:visibility="gone"
                         tools:text="3" />
-
                 </FrameLayout>
+
                 <ImageButton
                     android:id="@+id/ib2"
                     android:layout_width="wrap_content"
@@ -124,9 +121,6 @@
                     android:scaleType="centerInside"
                     android:visibility="gone" />
             </LinearLayout>
-
         </LinearLayout>
-
     </com.google.android.material.appbar.MaterialToolbar>
-
 </com.google.android.material.appbar.AppBarLayout>

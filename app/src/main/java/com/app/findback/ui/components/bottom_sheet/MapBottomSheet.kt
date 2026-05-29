@@ -47,8 +47,8 @@ class MapBottomSheet(private val post: Post) : BaseBottomSheet() {
         binding.textTitle.text = post.title
         binding.textLocation.text = post.locationText
         binding.textDescription.text = post.description
-        binding.textDatetime.text = ConvertTime.formatTime(post.incidentDatetime)
-    }
+        binding.textDatetime.text =
+            ConvertTime.formatTime(post.incidentDatetime.toLong())    }
 
     //bắt xự kiê chuyển màn hình qua chi tiết bài post
     private fun setOnClick(){

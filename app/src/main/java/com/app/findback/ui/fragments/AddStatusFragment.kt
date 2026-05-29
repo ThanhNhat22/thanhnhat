@@ -114,7 +114,6 @@ class AddStatusFragment : Fragment(), ToolbarConfigProvider {
         binding.btnPost.setOnClickListener { uploadPost() }
         binding.btnCancel.setOnClickListener { resetForm() }
 
-        // 👇 Mở map để chọn vị trí
         binding.btnPickLocation.setOnClickListener {
             parentFragmentManager.beginTransaction()
                 .replace(R.id.fragmentContainer, LocationPickerFragment())
@@ -179,7 +178,6 @@ class AddStatusFragment : Fragment(), ToolbarConfigProvider {
         val location    = binding.edtLocation.text.toString().trim()
         val postType    = if (binding.layoutLost.isSelected) "lost" else "found"
 
-        // Validate
         if (title.isEmpty()) {
             toast(getString(R.string.error_empty_title)); return
         }
@@ -190,16 +188,19 @@ class AddStatusFragment : Fragment(), ToolbarConfigProvider {
             toast(getString(R.string.error_empty_location)); return
         }
         if (pickedLat == 0.0 && pickedLng == 0.0) {
-            toast("Vui lòng chọn vị trí trên bản đồ"); return  // 👈 bắt buộc
+            toast("Vui lòng chọn vị trí trên bản đồ"); return
         }
 
         val now  = System.currentTimeMillis()
         val user = FirebaseAuth.getInstance().currentUser
 
+        val imageUris = imageAdapter.getImages()
+
         val post = Post(
             postId       = now.toString(),
             userId       = user?.uid ?: "",
             userName     = user?.displayName ?: "Người dùng",
+            userAvatar   = user?.photoUrl?.toString() ?: "",
             postType     = postType,
             title        = title,
             description  = description,
@@ -211,7 +212,7 @@ class AddStatusFragment : Fragment(), ToolbarConfigProvider {
             status       = "active"
         )
 
-        postViewModel.uploadPost(post, imageAdapter.getImages())
+        postViewModel.uploadPost(post, imageUris)
     }
 
     // =========================================================
